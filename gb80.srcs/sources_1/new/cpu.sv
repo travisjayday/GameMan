@@ -72,11 +72,7 @@ module cpu import cpu_defs::*;(
 
             // decode instruction
 
-            case (wram_read_out) 
-                8'h00: begin
-                    // nop
-                end
-            endcase
+           
 
             // execute instruction
 

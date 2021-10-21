@@ -1,7 +1,7 @@
-cc="../toolchain/rgbasm.exe"
-ll="../toolchain/rgblink.exe"
-fix="../toolchain/rgbfix.exe"
-emu="../emu/bgb64.exe"
+cc="../../toolchain/rgbasm.exe"
+ll="../../toolchain/rgblink.exe"
+fix="../../toolchain/rgbfix.exe"
+emu="../../emu/bgb64.exe"
 
 main:
 	$(cc) -L -o out.o hello_world.gameboy.asm
