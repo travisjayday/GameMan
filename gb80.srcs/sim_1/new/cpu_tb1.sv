@@ -34,7 +34,7 @@ module cpu_tb1(
 
         clk = 0; 
         rst = 1;     
-        #10 
+        #15
         rst = 0;
     end
 endmodule

@@ -24,15 +24,15 @@ module mem_m#(parameter MEM_SIZE=512)
     (
         input wire clk, 
         input wire rst,
-        input wire [7:0] addr_select,
-        input wire wr_select, 
-        output logic [7:0] rd_out,
-        input wire [7:0] wr_in
+        input wire [15:0] addr_select,       // address to interact with
+        input wire wr_select,               // 1 -> write to address; 0 -> read from address
+        output logic [7:0] rd_out,          // output (read value)
+        input wire [7:0] wr_value           // input (value to write to addres)
     );
 
     logic [7:0] ram [MEM_SIZE - 1 : 0];
 
-    always_ff @(posedge clk) begin
+    always_ff @(negedge clk) begin
         if (rst) begin
             //ram <= '{default:'0};
         end else begin
@@ -44,8 +44,8 @@ module mem_m#(parameter MEM_SIZE=512)
                 rd_out <= ram[addr_select];
             end else begin
                 if (addr_select >= MEM_SIZE) 
-                    $display("Memory write out of bound: 0x%x <- 0x%x", addr_select, wr_in);
-                ram[addr_select] <= wr_in;
+                    $display("Memory write out of bound: 0x%x <- 0x%x", addr_select, wr_value);
+                ram[addr_select] <= wr_value;
             end
         end 
     end

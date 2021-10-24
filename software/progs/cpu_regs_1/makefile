@@ -6,7 +6,7 @@ emu="../../emu/bgb64.exe"
 main:
 	$(cc) -L -o out.o prog.gameboy.asm
 	$(ll) -o out.gb out.o
-	$(fix) -v -p 0xFF out.gb
+	#$(fix) -v -p 0xFF out.gb
 
 emu: main
 	$(emu) out.gb

@@ -19,19 +19,44 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
+
 package cpu_defs;
-    typedef enum 
-    { REG_READ_AF, REG_READ_BC, REG_READ_DE, REG_READ_HL, REG_READ_SP, 
-      REG_READ_A, REG_READ_B, REG_READ_C, REG_READ_D, REG_READ_E, 
-      REG_READ_H, REG_READ_L,
-      REG_READ_PC 
-    } reg_read_t;
 
     typedef enum logic[3:0] 
-    { REG_WRITE_AF, REG_WRITE_BC, REG_WRITE_DE, REG_WRITE_HL, REG_WRITE_SP, REG_WRITE_PC, 
-      REG_WRITE_A, REG_WRITE_B, REG_WRITE_C, REG_WRITE_D, REG_WRITE_E, REG_WRITE_L, REG_WRITE_H, 
-      REG_WRITE_NOP 
-    } reg_write_t;
+    { 
+        REG_AF, REG_BC, REG_DE, REG_HL, REG_SP, REG_PC, 
+        REG_A, REG_B, REG_C, REG_D, REG_E, REG_H, REG_L, REG_UNKOWN 
+    } reg_select_t;
+
+
+    typedef enum {
+        WRITE_REG16_IMM, WRITE_REG8_IMM, WRITE_REG8_REG8, 
+        WRITE_MEM8_IMM, READ_MEM, 
+        ALU_IMM8, ALU_REG8, CPU_NOP, CPU_STALL_PC, DIE
+    } action;
+
+    typedef enum {
+        FETCH, DECODE, EXECUTE, FLOW
+    } cpu_state_t;
+
+    typedef struct packed {
+        action act;
+        logic[7:0] src;
+        logic[7:0] dst;
+        logic[7:0] arg;
+    } decoded_action_s;
+
+    typedef struct packed {
+        logic Z;
+        logic N;
+        logic H; 
+        logic C; 
+    } flags_s; 
+
+    typedef enum {
+        ALU_OP_ADD, ALU_OP_SUB, ALU_OP_OR
+    } alu_op_t;
+
 endpackage
 
 module cpu import cpu_defs::*;(
@@ -40,19 +65,19 @@ module cpu import cpu_defs::*;(
     );
 
     /* Register file */
-    reg_write_t reg_wr_select; 
+    reg_select_t reg_wr_select; 
     logic[15:0] reg_wr_value; 
     regs_m regs(clk, rst, reg_wr_select, reg_wr_value);
 
 
     /* Work RAM */ 
-    logic [7:0] wram_addr_select;
+    logic [15:0] wram_addr_select;
     logic wram_wr_select;
     logic [7:0] wram_rd_out;
-    logic [7:0] wram_wr_in;
+    logic [7:0] wram_wr_value;
     mem_m #(512) wram (
         clk, rst, 
-        wram_addr_select, wram_wr_select, wram_rd_out, wram_wr_in
+        wram_addr_select, wram_wr_select, wram_rd_out, wram_wr_value
     );
 
     /* CPU state */
@@ -60,51 +85,116 @@ module cpu import cpu_defs::*;(
     logic[7:0] cnt;
     logic[7:0] val;
 
+    logic[7:0] inst;
+    assign inst = wram_rd_out;
+    decoded_action_s decoded_action;
+    decoder_m decoder(clk, rst, inst, decoded_action);
+
+    cpu_state_t cpu_state;
+
+    flags_s flags; 
+    alu_m alu(rst, flags);
+
     always_ff @(posedge clk) begin
         if (rst) begin
             cnt <= 0; 
             val <= 16;
+            cpu_state <= FETCH;
         end else begin
-            // fetch next instruction (will arrive in wram_rd_out next)
-            // clock cycle)
-            wram_addr_select <= regs.read_reg16(REG_READ_PC);
-            wram_wr_in <= 1'b0;
+            // fetch next instruction every four clock cycles
 
-            // decode instruction
+            if      (cpu_state == FETCH) begin
+                // fetch new instruction
+                wram_addr_select <= regs.read_reg16(REG_PC);
+                wram_wr_select <= 1'b0;
 
-            case (wram_read_out) 
-                8'h00: begin
-                    // nop
-                end
-            endcase
+                cpu_state <= DECODE;
+            end
+            else if (cpu_state == DECODE) begin
+                // decode instruction (decode -> execute transition is where machine cycle starts)
+                cpu_state <= EXECUTE;
+            end 
+            else if (cpu_state == EXECUTE) begin
+                // execute instruction
+                case (decoded_action.act)
+                    WRITE_REG8_IMM: begin
+                        write_reg8(reg_select_t'(decoded_action.dst), decoded_action.arg);
+                    end
+                    WRITE_REG8_REG8: begin
+                        write_reg8(
+                            reg_select_t'(decoded_action.dst), 
+                            regs.read_reg8(reg_select_t'(decoded_action.src))
+                        );
+                    end
+                    WRITE_MEM8_IMM: begin
+                        // initiate memory write 
+                        wram_addr_select <= regs.read_reg16(
+                            reg_select_t'(decoded_action.dst)
+                        );
+                        wram_wr_value <= regs.read_reg8(
+                            reg_select_t'(decoded_action.src)
+                        );
+                        wram_wr_select <= 1'b1; 
+                    end
+                    ALU_IMM8: begin
+                        write_reg8(
+                            reg_select_t'(decoded_action.dst),
+                            alu.op8(
+                                alu_op_t'(decoded_action.arg), 
+                                regs.read_reg8(reg_select_t'(decoded_action.dst)), 
+                                decoded_action.src
+                            )
+                        );
+                    end
+                    ALU_REG8: begin
+                        write_reg8(
+                            reg_select_t'(decoded_action.dst),
+                            alu.op8(
+                                alu_op_t'(decoded_action.arg), 
+                                regs.read_reg8(reg_select_t'(decoded_action.dst)), 
+                                regs.read_reg8(reg_select_t'(decoded_action.src))
+                            )
+                        );
+                    end
+                    CPU_STALL_PC: begin
+                        write_reg16(REG_PC, regs.read_reg16(REG_PC) - 1);
+                    end
+                    CPU_NOP: begin
+                        
+                    end
+                    DIE: begin
+                        $display("CPU dying...");
+                        $finish;
+                    end
+                endcase
+                cpu_state <= FLOW;
+            end
+            else if (cpu_state == FLOW) begin
+                // increment PC 
+                write_reg16(REG_PC, regs.read_reg16(REG_PC) + 1);
 
-            // execute instruction
+                // Stop writing to ram 
+                if (wram_wr_select) wram_wr_select <= 0; 
 
-            if (cnt == 0) begin
-                write_reg16(REG_WRITE_HL, 16'h1234);
-            end else if (cnt == 1) begin
-                write_reg8(REG_WRITE_A, 8'hFF);
-            end else begin
-                write_reg16(REG_WRITE_NOP, 16'h0000);
+                cpu_state <= FETCH;
             end
 
             cnt <= cnt + 1; 
-            val <= val + 1;
         end
     end
 
     /* Helper tasks */
     task write_reg16;
-        input reg_write_t dest;
+        input reg_select_t dest;
         input logic[15:0] val;
     begin
         reg_wr_select <= dest; 
-        reg_wr_value <= 16'hb00b;
+        reg_wr_value <= val;
     end
     endtask
 
     task write_reg8;
-        input reg_write_t dest;
+        input reg_select_t dest;
         input logic[7:0] val;
     begin
         reg_wr_select <= dest; 
@@ -116,7 +206,7 @@ endmodule
 module regs_m import cpu_defs::*;(
     input wire clk, 
     input wire rst,
-    input reg_write_t wr_select, 
+    input reg_select_t wr_select, 
     input wire [15:0] wr_value
 );
 
@@ -130,16 +220,16 @@ module regs_m import cpu_defs::*;(
 
     /* Combinationally read an 16 bit register value */
     function [15:0] read_reg16;
-        input reg_read_t rd_select;
+        input reg_select_t rd_select;
         logic[15:0] rd_out;
         begin
             case (rd_select) 
-                REG_READ_AF: rd_out = AF;
-                REG_READ_BC: rd_out = BC;
-                REG_READ_DE: rd_out = DE;
-                REG_READ_HL: rd_out = HL;
-                REG_READ_SP: rd_out = SP;
-                REG_READ_PC: rd_out = PC;
+                REG_AF: rd_out = AF;
+                REG_BC: rd_out = BC;
+                REG_DE: rd_out = DE;
+                REG_HL: rd_out = HL;
+                REG_SP: rd_out = SP;
+                REG_PC: rd_out = PC;
                 default:     rd_out = 'hdead; 
             endcase
             read_reg16 = rd_out;
@@ -148,17 +238,17 @@ module regs_m import cpu_defs::*;(
 
     /* Combinationally read an 8 bit register value */
     function [7:0] read_reg8;
-        input reg_read_t rd_select;
+        input reg_select_t rd_select;
         logic[7:0] rd_out;
         begin
             case (rd_select) 
-                REG_READ_A: rd_out = AF[15:8];
-                REG_READ_B: rd_out = BC[15:8];
-                REG_READ_C: rd_out = BC[7:0];
-                REG_READ_D: rd_out = DE[15:8];
-                REG_READ_E: rd_out = DE[7:0];
-                REG_READ_H: rd_out = HL[15:8];
-                REG_READ_L: rd_out = HL[7:0];
+                REG_A: rd_out = AF[15:8];
+                REG_B: rd_out = BC[15:8];
+                REG_C: rd_out = BC[7:0];
+                REG_D: rd_out = DE[15:8];
+                REG_E: rd_out = DE[7:0];
+                REG_H: rd_out = HL[15:8];
+                REG_L: rd_out = HL[7:0];
                 default:     rd_out = 'hdead; 
             endcase
             read_reg8 = rd_out;
@@ -168,9 +258,9 @@ module regs_m import cpu_defs::*;(
     /* Sequentially write register values depending on 
         Moduel input: register[wr_select] <= wr_value;
     */
-    always_ff @(posedge clk) begin
+    always_ff @(negedge clk) begin
         if (rst) begin
-            PC <= 0; 
+            PC <= 16'h100; 
             AF <= 0; 
             BC <= 0; 
             DE <= 0; 
@@ -178,19 +268,19 @@ module regs_m import cpu_defs::*;(
             SP <= 0; 
         end else begin
             case (wr_select) 
-                REG_WRITE_AF: AF <= wr_value; 
-                REG_WRITE_BC: BC <= wr_value;
-                REG_WRITE_DE: DE <= wr_value; 
-                REG_WRITE_HL: HL <= wr_value; 
-                REG_WRITE_SP: SP <= wr_value; 
-                REG_WRITE_PC: PC <= wr_value;
-                REG_WRITE_A:  AF <= { wr_value[7:0], AF[7:0] };
-                REG_WRITE_B:  BC <= { wr_value[7:0], BC[7:0] }; 
-                REG_WRITE_C:  BC <= { BC[15:8], wr_value[7:0] }; 
-                REG_WRITE_D:  DE <= { wr_value[7:0], DE[7:0] };
-                REG_WRITE_E:  DE <= { DE[15:8], wr_value[7:0] }; 
-                REG_WRITE_H:  HL <= { wr_value[7:0], HL[7:0] }; 
-                REG_WRITE_L:  HL <= { HL[15:8], wr_value[7:0] };
+                REG_AF: AF <= wr_value; 
+                REG_BC: BC <= wr_value;
+                REG_DE: DE <= wr_value; 
+                REG_HL: HL <= wr_value; 
+                REG_SP: SP <= wr_value; 
+                REG_PC: PC <= wr_value;
+                REG_A:  AF <= { wr_value[7:0], AF[7:0] };
+                REG_B:  BC <= { wr_value[7:0], BC[7:0] }; 
+                REG_C:  BC <= { BC[15:8], wr_value[7:0] }; 
+                REG_D:  DE <= { wr_value[7:0], DE[7:0] };
+                REG_E:  DE <= { DE[15:8], wr_value[7:0] }; 
+                REG_H:  HL <= { wr_value[7:0], HL[7:0] }; 
+                REG_L:  HL <= { HL[15:8], wr_value[7:0] };
                 default:      begin end // REG_WRITE_NOP 
             endcase
         end
