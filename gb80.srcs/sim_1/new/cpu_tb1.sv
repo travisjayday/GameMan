@@ -24,13 +24,14 @@ module cpu_tb1(
 
     );
     logic clk, rst;
-    cpu uut(clk, rst); 
+    logic out; 
+    top_level uut(clk, {rst, 15'b0}); 
 
     always #5 clk = !clk;
 
 
     initial begin
-        $readmemh("p1.mem", uut.wram.ram);
+        //$readmemh("p1.mem", uut.wram);
 
         clk = 0; 
         rst = 1;     
