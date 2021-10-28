@@ -27,8 +27,6 @@
     input wire [15:0] wr_value
 );*/
 
-
-
 /* Helper tasks */
 task write_reg16;
     input reg_select_t dest;
@@ -60,6 +58,7 @@ function [15:0] read_reg16;
             REG_HL: rd_out = regs.HL;
             REG_SP: rd_out = regs.SP;
             REG_PC: rd_out = regs.PC;
+            REG_WZ: rd_out = regs.WZ;
             default:     rd_out = 'hdead; 
         endcase
         read_reg16 = rd_out;
@@ -79,24 +78,31 @@ function [7:0] read_reg8;
             REG_E: rd_out = regs.DE[7:0];
             REG_H: rd_out = regs.HL[15:8];
             REG_L: rd_out = regs.HL[7:0];
+            REG_S: rd_out = regs.SP[15:8];
+            REG_P: rd_out = regs.SP[7:0];
+            REG_W: rd_out = regs.WZ[15:8];
+            REG_Z: rd_out = regs.WZ[7:0];
             default:     rd_out = 'hdead; 
         endcase
         read_reg8 = rd_out;
     end 
 endfunction
 
+/* Assign flags register values */
+assign regs.AF[7:0] = {flags.Z, flags.N, flags.H, flags.C, 4'b0};
 
 /* Sequentially write register values depending on 
     Moduel input: register[wr_select] <= wr_value;
 */
 always_ff @(negedge clk) begin
     if (rst) begin
-        regs.PC <= 16'h100 - 1; 
-        regs.AF <= 0; 
+        regs.PC <= 16'h0 - 1; 
+        regs.AF[15:8] <= 0; 
         regs.BC <= 0; 
         regs.DE <= 0; 
         regs.HL <= 0; 
         regs.SP <= 0; 
+        regs.WZ <= 0; 
     end else begin
         case (reg_wr_select) 
             REG_AF: regs.AF <= reg_wr_value; 
@@ -105,6 +111,7 @@ always_ff @(negedge clk) begin
             REG_HL: regs.HL <= reg_wr_value; 
             REG_SP: regs.SP <= reg_wr_value; 
             REG_PC: regs.PC <= reg_wr_value;
+            REG_WZ: regs.WZ <= reg_wr_value;
             REG_A:  regs.AF <= { reg_wr_value[7:0], regs.AF[7:0] };
             REG_B:  regs.BC <= { reg_wr_value[7:0], regs.BC[7:0] }; 
             REG_C:  regs.BC <= { regs.BC[15:8], reg_wr_value[7:0] }; 
@@ -112,6 +119,10 @@ always_ff @(negedge clk) begin
             REG_E:  regs.DE <= { regs.DE[15:8], reg_wr_value[7:0] }; 
             REG_H:  regs.HL <= { reg_wr_value[7:0], regs.HL[7:0] }; 
             REG_L:  regs.HL <= { regs.HL[15:8], reg_wr_value[7:0] };
+            REG_S:  regs.SP <= { reg_wr_value[7:0], regs.SP[7:0] };
+            REG_P:  regs.SP <= { regs.SP[15:8], reg_wr_value[7:0] };
+            REG_W:  regs.WZ <= { reg_wr_value[7:0], regs.WZ[7:0] };
+            REG_Z:  regs.WZ <= { regs.WZ[15:8], reg_wr_value[7:0] };
             default:      begin end // REG_WRITE_NOP 
         endcase
     end

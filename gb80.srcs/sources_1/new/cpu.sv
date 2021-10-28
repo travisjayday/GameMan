@@ -23,35 +23,36 @@ module cpu import cpu_defs::*;(
     input wire clk, 
     input wire rst,
     input reg_file_s regs,
-    bram_if.master wram 
-    );
+    mem_if.master mmu,
+    output logic cpu_died
+);
 
-    /* Register file */
+    /* Register file read / write lines */
     reg_select_t reg_wr_select; 
     logic[15:0] reg_wr_value; 
+    flags_s flags; 
 
     /* CPU state */
     logic[15:0] read_val; 
     logic[7:0] cnt;
     logic[7:0] val;
-
     logic[7:0] inst;
-    assign inst = wram.read_out;
+    assign out = cnt;
+
+    // Instruction is always the output of MMU
+    assign inst = mmu.read_out;
     decoded_action_s decoded_action;
     decoder_m decoder(clk, rst, inst, decoded_action);
 
+    // Main state for CPU FSM
     cpu_state_t cpu_state;
-
-    flags_s flags; 
-    logic skip_next_fetch; 
-
-    assign out = cnt;
 
     always_ff @(posedge clk) begin
         if (rst) begin
             cnt <= 0; 
             val <= 16;
             cpu_state <= FLOW;
+            cpu_died <= 0; 
         end else begin
 
             if (cpu_state == FETCH) begin
@@ -74,30 +75,39 @@ module cpu import cpu_defs::*;(
                             read_reg8(reg_select_t'(decoded_action.src))
                         );
                     end
-                    WRITE_MEM8_IMM: begin
+                    WRITE_MEM8_REG8: begin
                         // initiate memory write 
-                        wram.addr_select <= read_reg16(
+                        mmu.addr_select <= read_reg16(
                             reg_select_t'(decoded_action.dst)
                         );
-                        wram.write_value <= read_reg8(
+                        mmu.write_value <= read_reg8(
                             reg_select_t'(decoded_action.src)
                         );
-                        wram.write_enable <= 1'b1; 
+                        mmu.write_enable <= 1'b1; 
+
+                        // Increment Destination Register to next byte address
+                        // If this argument is set
+                        if (decoded_action.arg == 1) begin
+                            write_reg16(
+                                reg_select_t'(decoded_action.dst),
+                                read_reg16(reg_select_t'(decoded_action.dst)) + 1
+                            );
+                        end
                     end
                     READ_MEM8: begin
                         // Initiate memory read 
-                        wram.addr_select <= read_reg16(
+                        mmu.addr_select <= read_reg16(
                             reg_select_t'(decoded_action.src)
                         );
-                        wram.write_enable <= 1'b0; 
+                        mmu.write_enable <= 1'b0; 
                     end
                     ALU_IMM8: begin
                         write_reg8(
                             reg_select_t'(decoded_action.dst),
                             alu_op8(
-                                alu_op_t'(decoded_action.arg), 
-                                read_reg8(reg_select_t'(decoded_action.dst)), 
-                                decoded_action.src
+                                .op(alu_op_t'(decoded_action.arg)), 
+                                .dst(read_reg8(reg_select_t'(decoded_action.dst))),
+                                .src(decoded_action.src)
                             )
                         );
                     end
@@ -105,9 +115,19 @@ module cpu import cpu_defs::*;(
                         write_reg8(
                             reg_select_t'(decoded_action.dst),
                             alu_op8(
+                                .op(alu_op_t'(decoded_action.arg)), 
+                                .dst(read_reg8(reg_select_t'(decoded_action.dst))), 
+                                .src(read_reg8(reg_select_t'(decoded_action.src)))
+                            )
+                        );
+                    end
+                    ALU_REG16: begin
+                        write_reg16(
+                            reg_select_t'(decoded_action.dst), 
+                            alu_op16(
                                 alu_op_t'(decoded_action.arg), 
-                                read_reg8(reg_select_t'(decoded_action.dst)), 
-                                read_reg8(reg_select_t'(decoded_action.src))
+                                read_reg16(reg_select_t'(decoded_action.dst)), 
+                                read_reg16(reg_select_t'(decoded_action.src))
                             )
                         );
                     end
@@ -115,8 +135,7 @@ module cpu import cpu_defs::*;(
                         
                     end
                     CPU_DIE: begin
-                        $display("CPU dying...");
-                        $finish;
+                        cpu_died <= 1; 
                     end
                 endcase
                 cpu_state <= FLOW;
@@ -125,9 +144,9 @@ module cpu import cpu_defs::*;(
                 // move PC and start fetch
                 if (decoded_action.next_pc) begin
                     write_reg16(REG_PC, read_reg16(REG_PC) + 1);
-                    wram.addr_select <= read_reg16(REG_PC) + 1;
+                    mmu.addr_select <= read_reg16(REG_PC) + 1;
                 end
-                wram.write_enable <= 1'b0;
+                mmu.write_enable <= 1'b0;
                 cpu_state <= FETCH;
             end
 
