@@ -79,26 +79,24 @@ begin
         end
         /* Third Cycle */ 12:
         begin cycles_left <= 12 - 1;
-            decoded_action.act <= WRITE_REG8_IMM;
-            decoded_action.dst <= REG_W;   // casting reg_select to logic (kinda sus)
-            decoded_action.arg <= inst;
-            decoded_action.src <= 0;
+            // Hi byte of address coming in now. We need to start write request
+            decoded_action.act <= WRITE_MEM8_REG8_WZ;
+            decoded_action.dst <= REG_Z;   // Low byte of address
+            decoded_action.src <= REG_P;
+            decoded_action.arg <= inst;     // high byte of address
             decoded_action.next_pc <= 0; 
         end
         /* Fourth Cycle */ 8:
         begin cycles_left <= 8 - 1;
             decoded_action.act <= WRITE_MEM8_REG8;
             decoded_action.dst <= REG_WZ;   // casting reg_select to logic (kinda sus)
-            decoded_action.src <= REG_P;
+            decoded_action.src <= REG_S;
             decoded_action.arg <= 1;
             decoded_action.next_pc <= 0; 
         end
         /* Fifth Cycle */ 4:
         begin cycles_left <= 4 - 1;
-            decoded_action.act <= WRITE_MEM8_REG8;
-            decoded_action.dst <= REG_WZ;   // casting reg_select to logic (kinda sus)
-            decoded_action.src <= REG_S;
-            decoded_action.arg <= 0;
+            decoded_action.act <= CPU_NOP; 
             decoded_action.next_pc <= 1; 
         end
         default: begin
@@ -125,7 +123,7 @@ endtask
 
 /* 
     Load an imm8 into a reg8
-    - 1 machine cycle
+    - 2 machine cycle
 */
 task LD_REG8_IMM; 
     input reg_select_t dst;
@@ -195,13 +193,55 @@ begin
 end
 endtask
 
+
 /* 
-    // Loads reg8 with value pointed to by reg16
+    Load an imm16 into memory pointed to by reg16
+    - 3 cycle instruction 
+*/
+task LD_MEM8_IMM; 
+    input reg_select_t dst_addr;
+begin
+    case (cycles_left) 
+        /* First Cycle */ 0: 
+        begin 
+            // Wait for IMM  
+            cycles_left <= 12 - 1;
+            current_inst <= inst; 
+            decoded_action.act <= CPU_NOP;
+            decoded_action.next_pc <= 1; 
+        end
+        /* Second Cycle */ 8:
+        begin cycles_left <= 8 - 1; 
+            // start mem write request
+            decoded_action.act <= WRITE_MEM8_IMM; 
+            decoded_action.dst <= dst_addr;
+            decoded_action.src <= inst; 
+            decoded_action.arg <= 0;
+            decoded_action.next_pc <= 0; 
+        end
+        /* Third Cycle */ 4:
+        begin cycles_left <= 4 - 1;
+            decoded_action.act <= CPU_NOP;
+            decoded_action.next_pc <= 1; 
+        end
+        default: begin
+            cycles_left <= cycles_left - 1; 
+        end
+    endcase
+end
+endtask
+
+
+/* 
+    // Loads reg8 with value pointed to by reg16. 
+    // Incremets or decrements address register if desired. 
     - 2 machine cycles
 */
 task LD_REG8_MEM; 
     input reg_select_t dst;
     input reg_select_t src_addr;
+    input alu_op_t incdec;          // performs increment / decrement on source address regsiter
+    input alu_op_t post_op;         // perofrms alu operation on read value
 begin
     case (cycles_left)
         /* First Cycle */ 0: 
@@ -211,16 +251,23 @@ begin
             // start mem read request
             decoded_action.act <= READ_MEM8; 
             decoded_action.src <= src_addr;
-            decoded_action.dst <= dst; 
+            decoded_action.dst <= 0; 
+            if (incdec == ALU_OP_INC16) 
+                decoded_action.arg <= 1; 
+            else if (incdec == ALU_OP_DEC16) 
+                decoded_action.arg <= 2; 
+            else
+                decoded_action.arg <= 0; 
             decoded_action.next_pc <= 0; 
         end
         /* Second Machine Cycle */ 4: 
         begin cycles_left <= 4 - 1; 
             // the fetched value will now be in inst, so
-            // write it to reg as an immediate
-            decoded_action.act <= WRITE_REG8_IMM; 
+            // write it to reg as an immediate or perform ALU op on it 
+            decoded_action.act <= ALU_IMM8; 
+            decoded_action.arg <= post_op;
             decoded_action.dst <= dst;
-            decoded_action.arg <= inst;
+            decoded_action.src <= inst;
             decoded_action.next_pc <= 1; 
         end
         default: begin
@@ -229,6 +276,7 @@ begin
     endcase
 end
 endtask
+
 
 /* 
     Increment 8 bit register 
@@ -294,14 +342,56 @@ end
 endtask
 
 
+/* 
+    Increment or decrmement byte at memory location
+    - 3 cycle instruction 
+*/
+task INCDEC_MEM8; 
+    input reg_select_t src_addr;
+    input alu_op_t inc_or_dec;
+begin
+    case (cycles_left) 
+        /* First Cycle */ 0: 
+        begin 
+            cycles_left <= 12 - 1;
+            current_inst <= inst;
+            // start mem read request
+            decoded_action.act <= READ_MEM8; 
+            decoded_action.src <= src_addr;
+            decoded_action.dst <= 0; 
+            decoded_action.arg <= 0; 
+            decoded_action.next_pc <= 0; 
+        end
+        /* Second Cycle */ 8:
+        begin cycles_left <= 8 - 1; 
+            // start mem write request
+            decoded_action.act <= WRITE_MEM8_REG8_ALU; 
+            decoded_action.arg <= inc_or_dec;
+            decoded_action.dst <= src_addr;
+            decoded_action.src <= inst;     // increment incoming byte and write back
+            decoded_action.next_pc <= 0; 
+        end
+        /* Third Cycle */ 4:
+        begin cycles_left <= 4 - 1;
+            decoded_action.act <= CPU_NOP; 
+            decoded_action.next_pc <= 1; 
+        end
+        default: begin
+            cycles_left <= cycles_left - 1; 
+        end
+    endcase
+end
+endtask
+
 
 /* Add 8-bit register */
-task ADD8; 
+task ALU_OP8; 
     input reg_select_t dst;
     input reg_select_t src;
+    input alu_op_t op;
     begin
     decoded_action.act <= ALU_REG8;
-    decoded_action.arg <= ALU_OP_ADD;
+    decoded_action.arg <= op;
     decoded_action.src <= src;
     decoded_action.dst <= dst;
     decoded_action.next_pc <= 1; 
@@ -340,6 +430,29 @@ task ADD16;
 endtask
 
 
+/* Flips all bits in A register */
+task CPL; 
+    begin
+    decoded_action.act <= ALU_REG8;
+    decoded_action.arg <= ALU_OP_CPL;
+    decoded_action.src <= REG_A;
+    decoded_action.dst <= REG_A;
+    decoded_action.next_pc <= 1; 
+    end
+endtask
+
+/* Flips all bits in A register */
+task CF; 
+    input wire new_cf;
+    begin
+    decoded_action.act <= ALU_IMM8;
+    decoded_action.arg <= ALU_OP_CF;
+    decoded_action.src <= new_cf;
+    decoded_action.dst <= REG_UNKOWN;
+    decoded_action.next_pc <= 1; 
+    end
+endtask
+
 /* Rotate Left Carry */
 task RL_REG8; 
     input reg_select_t dst;
@@ -365,6 +478,20 @@ task RR_REG8;
     decoded_action.dst <= dst;
     decoded_action.src <= rst_zflag;
     decoded_action.next_pc <= 1; 
+    end
+endtask
+
+/* 
+    DAA load decimal coded binary into A
+    - 1 cycle instruction 
+*/
+task DAA; 
+    begin
+        decoded_action.act <= ALU_REG8;
+        decoded_action.arg <= ALU_OP_DAA;
+        decoded_action.dst <= REG_A;
+        decoded_action.src <= REG_A;
+        decoded_action.next_pc <= 1; 
     end
 endtask
 

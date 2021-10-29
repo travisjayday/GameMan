@@ -4,8 +4,6 @@ SECTION "Header", ROM0[$00]
 	ld bc, $0100	
 	ld a, $bb
 	ld [bc], a
-	db $fd
-
 	ld a, $aa
 	ld a, [bc]
 	ld bc, $8000
@@ -20,6 +18,7 @@ SECTION "Header", ROM0[$00]
 	ld a, $bb
 	ld [hl-], a
 	ld [hl-], a
+	db $fd
 	/*
 	ld a, $ff
 	LD [BC],A

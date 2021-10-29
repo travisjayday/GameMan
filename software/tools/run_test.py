@@ -97,7 +97,7 @@ def run_xsim_program(prog_file):
         line = str(p.stdout.readline(), 'utf8')
         print(line, end='')
         output.append(line)
-        if 'xsim: Time' in line: 
+        if 'xsim: Time' in line or "$finish called" in line: 
             break
     print('Stopping xsim...')
     p.stdin.write(bytes('exit\n', 'utf8'))
@@ -112,16 +112,32 @@ def run_xsim_program(prog_file):
 
 if __name__ == "__main__": 
 
+    testall = False
     uts = []
     for prog in os.listdir(prog_dir):
-        if prog.startswith('ut_cpu_regs'):
-            uts.append(prog_dir + prog)
+        if not testall: 
+            if prog.startswith('ut_cpu_alu_misc'):
+                uts.append(prog_dir + prog)
+        else:
+            if prog.startswith('ut_cpu_'):
+                uts.append(prog_dir + prog)
 
+    passed = []
+    failed = []
     for test_dir in uts: 
         prog_file = test_dir + os.sep + 'out.gb' 
         assemble_program(prog_file)
         gb_emu = run_emu_as_bootrom(prog_file, debug=False)
         gb_uut = run_xsim_program(prog_file)
 
-        gb_uut.compare(gb_emu)
+        if gb_uut.compare(gb_emu): 
+            passed.append(test_dir)
+        else:
+            failed.append(test_dir)
+
+    if testall:
+        print('Passed:', passed)
+        print('Failed:', failed)
+        if len(failed) == 0:
+            print("Sorry you fool")
         #print(gb_uut.stringify_mem("oam"))

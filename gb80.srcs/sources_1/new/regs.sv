@@ -105,7 +105,7 @@ always_ff @(negedge clk) begin
         regs.WZ <= 0; 
     end else begin
         case (reg_wr_select) 
-            REG_AF: regs.AF <= reg_wr_value; 
+            //REG_AF: regs.AF <= reg_wr_value;  cannot write to flags
             REG_BC: regs.BC <= reg_wr_value;
             REG_DE: regs.DE <= reg_wr_value; 
             REG_HL: regs.HL <= reg_wr_value; 

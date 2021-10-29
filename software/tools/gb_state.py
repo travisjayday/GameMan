@@ -139,6 +139,10 @@ class GameBoyState():
 
         if (not mem_mismatch) and (not reg_mismatch):
             print('[GOOD] ***States are equal!***')
+            return True
+        else:
+            print('[BAD] ;-(')
+            return False
 
 
 

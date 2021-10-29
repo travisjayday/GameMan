@@ -59,9 +59,24 @@ package cpu_defs;
 
     /* An general / catagorical action the CPU FSM can execute */
     typedef enum {
+        CPU_NOP, CPU_DIE,
+
+        /* Reg Ops */
         WRITE_REG16_IMM, WRITE_REG8_IMM, WRITE_REG8_REG8, 
-        WRITE_MEM8_REG8, READ_MEM8, 
-        ALU_IMM8, ALU_REG16, ALU_REG8, CPU_NOP, CPU_DIE, 
+
+        /* Write Mem Ops */
+        WRITE_MEM8_REG8, 
+        WRITE_MEM8_REG8_WZ, 
+        WRITE_MEM8_REG8_ALU, 
+        WRITE_MEM8_IMM,
+
+        /* Read Mem Ops */
+        READ_MEM8, 
+
+        /* ALU Ops */ 
+        ALU_IMM8, ALU_REG16, ALU_REG8,  
+        
+        /* Flow ops */
         FLOW_JR
     } action_t;
 
@@ -87,8 +102,14 @@ package cpu_defs;
 
     /* ALU Operations. Categorical actions the ALU can perform */
     typedef enum {
-        ALU_OP_ADD, ALU_OP_SUB, ALU_OP_OR, 
+        ALU_OP_ADD, ALU_OP_ADC, 
+        ALU_OP_SUB, ALU_OP_SBC,  
+        ALU_OP_INC8, ALU_OP_DEC8,
         ALU_OP_INC16, ALU_OP_DEC16, ALU_OP_NOP,
+        ALU_OP_AND, ALU_OP_XOR, ALU_OP_OR, ALU_OP_CP,
+
+        /* Misc */
+        ALU_OP_DAA, ALU_OP_CPL, ALU_OP_CF,
 
         /* For special ops that rotate A */
         ALU_OP_ROT_LC, ALU_OP_ROT_L, ALU_OP_ROT_RC, ALU_OP_ROT_R
