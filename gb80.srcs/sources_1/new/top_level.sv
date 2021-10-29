@@ -11,6 +11,10 @@ module top_level import cpu_defs::*;(
     logic cpu_died;
     cpu _cpu(clk, sw[15], regs, mmu_if, cpu_died);
 
+    initial begin
+        $timeformat(-9, 2, " ns", 20);
+    end
+
     /* CPU Watchdog */
     always_comb begin
         if (cpu_died == 1'b1) begin

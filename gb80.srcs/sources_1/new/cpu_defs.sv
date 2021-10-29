@@ -61,7 +61,8 @@ package cpu_defs;
     typedef enum {
         WRITE_REG16_IMM, WRITE_REG8_IMM, WRITE_REG8_REG8, 
         WRITE_MEM8_REG8, READ_MEM8, 
-        ALU_IMM8, ALU_REG16, ALU_REG8, CPU_NOP, CPU_DIE
+        ALU_IMM8, ALU_REG16, ALU_REG8, CPU_NOP, CPU_DIE, 
+        FLOW_JR
     } action_t;
 
     /* A categorical CPU action with additional arguments and 
@@ -87,7 +88,7 @@ package cpu_defs;
     /* ALU Operations. Categorical actions the ALU can perform */
     typedef enum {
         ALU_OP_ADD, ALU_OP_SUB, ALU_OP_OR, 
-        ALU_OP_INC16, ALU_OP_DEC16, 
+        ALU_OP_INC16, ALU_OP_DEC16, ALU_OP_NOP,
 
         /* For special ops that rotate A */
         ALU_OP_ROT_LC, ALU_OP_ROT_L, ALU_OP_ROT_RC, ALU_OP_ROT_R

@@ -28,4 +28,9 @@ SECTION "Header", ROM0[$00]
 	rrca 
 	rrca 
 
+	rra
+	rra
+	rla
+	
+
 	db $fd

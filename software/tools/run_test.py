@@ -114,7 +114,7 @@ if __name__ == "__main__":
 
     uts = []
     for prog in os.listdir(prog_dir):
-        if prog.startswith('ut_cpu_alu_rot'):
+        if prog.startswith('ut_cpu_regs'):
             uts.append(prog_dir + prog)
 
     for test_dir in uts: 

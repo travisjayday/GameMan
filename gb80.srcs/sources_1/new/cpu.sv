@@ -42,7 +42,7 @@ module cpu import cpu_defs::*;(
     // Instruction is always the output of MMU
     assign inst = mmu.read_out;
     decoded_action_s decoded_action;
-    decoder_m decoder(clk, rst, inst, decoded_action);
+    decoder_m decoder(clk, rst, inst, flags, decoded_action);
 
     // Main state for CPU FSM
     cpu_state_t cpu_state;
@@ -68,6 +68,10 @@ module cpu import cpu_defs::*;(
                 case (decoded_action.act)
                     WRITE_REG8_IMM: begin
                         write_reg8(reg_select_t'(decoded_action.dst), decoded_action.arg);
+                    end
+                    WRITE_REG16_IMM: begin
+                        // arg + src concat make up 16 bit value to write to 16 bit reg
+                        write_reg8(reg_select_t'(decoded_action.dst), {decoded_action.arg, decoded_action.src});
                     end
                     WRITE_REG8_REG8: begin
                         write_reg8(
@@ -129,6 +133,13 @@ module cpu import cpu_defs::*;(
                                 read_reg16(reg_select_t'(decoded_action.dst)), 
                                 read_reg16(reg_select_t'(decoded_action.src))
                             )
+                        );
+                    end
+                    FLOW_JR: begin
+                        write_reg16(REG_PC, 
+                            decoded_action.arg >= 128? 
+                                read_reg16(REG_PC) - (256 - decoded_action.arg) : 
+                                read_reg16(REG_PC) + decoded_action.arg
                         );
                     end
                     CPU_NOP: begin

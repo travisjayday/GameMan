@@ -1,6 +1,11 @@
 task NOP; 
-    decoded_action <= CPU_NOP;
+begin
+    decoded_action.act <= CPU_NOP;
+    decoded_action.src <= 8'h00;
+    decoded_action.dst <= 8'h00;
+    decoded_action.arg <= 8'h00;
     decoded_action.next_pc <= 1; 
+end
 endtask
 
 task DO_DIE;
@@ -155,6 +160,7 @@ endtask
 task LD_MEM8_REG8; 
     input reg_select_t dst_addr;
     input reg_select_t src;
+    input alu_op_t alu_action;        // nop, increment, or decrement register holding dst_addr
 begin
     case (cycles_left)
         /* First Cycle */ 0: 
@@ -170,8 +176,16 @@ begin
         end
         /* Second Machine Cycle */ 4: 
         begin cycles_left <= 4 - 1; 
-            // do nothing as memory write completes...
-            decoded_action.act <= CPU_NOP; 
+            if (alu_action == ALU_OP_NOP) begin
+                // do nothing as memory write completes...
+                decoded_action.act <= CPU_NOP; 
+            end else begin
+                // decrement destination address register
+                decoded_action.act <= ALU_REG16; 
+                decoded_action.arg <= alu_action;
+                decoded_action.dst <= dst_addr; 
+                decoded_action.src <= REG_UNKOWN; 
+            end
             decoded_action.next_pc <= 1; 
         end
         default: begin
@@ -327,12 +341,13 @@ endtask
 
 
 /* Rotate Left Carry */
-task RLC_REG8; 
+task RL_REG8; 
     input reg_select_t dst;
+    input wire with_carry; 
     input wire reset_zero_flag; 
     begin
     decoded_action.act <= ALU_IMM8;
-    decoded_action.arg <= ALU_OP_ROT_LC;
+    decoded_action.arg <= with_carry? ALU_OP_ROT_LC : ALU_OP_ROT_L;
     decoded_action.dst <= dst;
     decoded_action.src <= reset_zero_flag;
     decoded_action.next_pc <= 1; 
@@ -340,14 +355,53 @@ task RLC_REG8;
 endtask
 
 /* Rotate Right Carry */
-task RRC_REG8; 
+task RR_REG8; 
     input reg_select_t dst;
-    input wire reset_zero_flag; 
+    input wire with_carry;      // if true, turn RR into RRC or RL into RLC
+    input wire rst_zflag;       // if true, force reset flags.Z = 0 
     begin
     decoded_action.act <= ALU_IMM8;
-    decoded_action.arg <= ALU_OP_ROT_RC;
+    decoded_action.arg <= with_carry? ALU_OP_ROT_RC : ALU_OP_ROT_R;
     decoded_action.dst <= dst;
-    decoded_action.src <= reset_zero_flag;
+    decoded_action.src <= rst_zflag;
     decoded_action.next_pc <= 1; 
     end
+endtask
+
+/* 
+    Jump to offset given condition. 
+    - 3 or 2 cycle instruction 
+*/
+task JR_CC; 
+    input wire condition_flag;  // If true, will do the relative jump
+begin
+    case (cycles_left) 
+        /* First Cycle */ 0: 
+        begin 
+            // Wait for imm for 1 cycle 
+            cycles_left <= 12 - 1;
+            current_inst <= inst; 
+            decoded_action.act <= CPU_NOP;
+            decoded_action.next_pc <= 0; 
+        end
+        /* Second Cycle */ 8:
+        begin cycles_left <= 8 - 1; 
+            decoded_action.act <= CPU_NOP;
+            decoded_action.next_pc <= 1; 
+
+            // Abort Relative jump because condition is false.
+            if (!condition_flag) cycles_left <= 0; 
+        end
+        /* Third Cycle */ 4:
+        begin cycles_left <= 4 - 1;
+            // Do reg write request.  
+            decoded_action.act <= FLOW_JR;
+            decoded_action.arg <= inst;   
+            decoded_action.next_pc <= 1; 
+        end
+        default: begin
+            cycles_left <= cycles_left - 1; 
+        end
+    endcase
+end
 endtask
