@@ -51,6 +51,8 @@ SECTION "Header", ROM0[$00]
 	ld e, a
 	adc a, e
 
+	rlca
+
 	or e 
 	cp e
 

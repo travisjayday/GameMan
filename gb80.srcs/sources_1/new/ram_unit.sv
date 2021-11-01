@@ -81,8 +81,9 @@ module mmu_m(input wire clk, mem_if.slave req);
         else if /* ECHO RAM (0xE000 - 0xFDFF) */
         (`ADDR_IN_RNG(16'hE000, 16'hFE00)) 
         begin
-            $display("Request to unimplemented echo ram was made...");
-            $finish;
+            `MAP_INTERFACE(mram_if, 16'hE000, 16'h4000); // map to mram_if[0:0x6000]
+            //$display("Request to unimplemented echo ram was made...");
+            //$finish;
         end 
         else if /* OAM RAM (0xFE00 - 0xFE9F) */
         (`ADDR_IN_RNG(16'hFE00, 16'hFEA0)) 
@@ -104,6 +105,7 @@ module mmu_m(input wire clk, mem_if.slave req);
         else if /* HRAM (0xFF80 - 0xFFFE) */
         (`ADDR_IN_RNG(16'hFF80, 16'hFFFF))
         begin
+            $display("Requerst to HRAM: 0x%x WE: %x VAL: %x", mram_if.addr_select, mram_if.write_enable, mram_if.write_value);
             `MAP_INTERFACE(mram_if, 16'hFF80, 16'hE0A0); // map to mram_if[0x60A0:0x6120]
         end 
         else if /* IE REGISTER (0xFFFF) */ 

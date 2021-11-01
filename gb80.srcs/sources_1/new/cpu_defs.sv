@@ -43,10 +43,12 @@ package cpu_defs;
 
     /* Register selection names. Essentially keys to reegister dict */
     typedef enum { 
+        REG_UNKOWN,
         REG_AF, REG_BC, REG_DE, REG_HL, REG_SP, REG_PC, 
-        REG_A, REG_B, REG_C, REG_D, REG_E, REG_H, REG_L, REG_UNKOWN,
+        REG_A, REG_F, REG_B, REG_C, REG_D, REG_E, REG_H, REG_L, 
         REG_S, REG_P,           // exist internally
-        REG_W, REG_Z, REG_WZ    // hidden
+        REG_W, REG_Z, REG_WZ,   // hidden
+        REG_PC_P, REG_PC_C
     } reg_select_t;
 
     /* CPU FSM states */
@@ -62,22 +64,27 @@ package cpu_defs;
         CPU_NOP, CPU_DIE,
 
         /* Reg Ops */
-        WRITE_REG16_IMM, WRITE_REG8_IMM, WRITE_REG8_REG8, 
+        WRITE_REG16_IMM, 
+        WRITE_REG8_IMM, 
+        WRITE_REG8_REG8, 
+        WRITE_REG16_REG16,
 
         /* Write Mem Ops */
         WRITE_MEM8_REG8, 
         WRITE_MEM8_REG8_WZ, 
-        WRITE_MEM8_REG8_ALU, 
+        WRITE_MEM8_REG8_ALU_HL, 
         WRITE_MEM8_IMM,
+        WRITE_MEM8_HRAM, 
 
         /* Read Mem Ops */
         READ_MEM8, 
+        READ_MEM8_IMM,
 
         /* ALU Ops */ 
         ALU_IMM8, ALU_REG16, ALU_REG8,  
         
         /* Flow ops */
-        FLOW_JR
+        FLOW_JR, FLOW_JMP, FLOW_JMP_IMM
     } action_t;
 
     /* A categorical CPU action with additional arguments and 
@@ -109,10 +116,16 @@ package cpu_defs;
         ALU_OP_AND, ALU_OP_XOR, ALU_OP_OR, ALU_OP_CP,
 
         /* Misc */
-        ALU_OP_DAA, ALU_OP_CPL, ALU_OP_CF,
+        ALU_OP_DAA, ALU_OP_CPL, ALU_OP_CF, ALU_SIGNED_OFFSET8,
 
-        /* For special ops that rotate A */
-        ALU_OP_ROT_LC, ALU_OP_ROT_L, ALU_OP_ROT_RC, ALU_OP_ROT_R
+        /* For special ops that rotate */
+        ALU_OP_ROT_LC, ALU_OP_ROT_L, ALU_OP_ROT_RC, ALU_OP_ROT_R,
+        ALU_OP_ROT_LCA, ALU_OP_ROT_LA, ALU_OP_ROT_RCA, ALU_OP_ROT_RA,
+
+        ALU_OP_SLA, ALU_OP_SRA, ALU_OP_SRL, ALU_OP_SWAP,
+
+        /* Bit ops */
+        ALU_OP_BIT_SET, ALU_OP_BIT_RES, ALU_OP_BIT_TEST
     } alu_op_t;
 
 endpackage

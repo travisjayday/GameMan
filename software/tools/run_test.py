@@ -116,10 +116,10 @@ if __name__ == "__main__":
     uts = []
     for prog in os.listdir(prog_dir):
         if not testall: 
-            if prog.startswith('ut_cpu_alu_misc'):
+            if prog.startswith('ut_boot'):
                 uts.append(prog_dir + prog)
         else:
-            if prog.startswith('ut_cpu_'):
+            if prog.startswith('ut_cpu_flow'):
                 uts.append(prog_dir + prog)
 
     passed = []
@@ -138,6 +138,6 @@ if __name__ == "__main__":
     if testall:
         print('Passed:', passed)
         print('Failed:', failed)
-        if len(failed) == 0:
+        if len(failed) != 0:
             print("Sorry you fool")
         #print(gb_uut.stringify_mem("oam"))
