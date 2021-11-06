@@ -49,7 +49,6 @@ function [11:0] alu_op8;
                 f.Z = out == 0? 1 : 0; 
                 f.N = 1;
                 f.H = (((dst & 4'hf) - (src & 4'hf)) & 8'h10) == 8'h10 ? 1 : 0;
-                $display("ALU OP Sub: out: %x, zero: %x", out, f.Z);
             end
             ALU_OP_SBC: begin
                 f.H = (((dst & 4'hf) - (src & 4'hf) - f.C) & 8'h10) == 8'h10 ? 1 : 0;

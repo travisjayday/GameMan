@@ -116,7 +116,7 @@ if __name__ == "__main__":
     uts = []
     for prog in os.listdir(prog_dir):
         if not testall: 
-            if prog.startswith('ut_boot'):
+            if prog.startswith('ut_interrupt'):
                 uts.append(prog_dir + prog)
         else:
             if prog.startswith('ut_cpu_flow'):

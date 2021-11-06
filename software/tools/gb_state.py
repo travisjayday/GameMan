@@ -19,9 +19,11 @@ class GameBoyState():
         self.ioreg = bytearray()
         self.hram = bytearray()
         self.ie = bytearray()
+        self.mmio = {}
         self.origin = None
         self.printbuf = ''
-
+        self.divider  = 0
+        self.totalclks = 0
 
         self.section_offsets = {
             'vram' : 0x8000,
@@ -56,6 +58,19 @@ class GameBoyState():
         load_section('ioreg')
         load_section('eram')
 
+        if 'mmio' in state_dic.keys():
+            for reg, val in state_dic['mmio'].items():
+                if reg == 'div': self.mmio['div'] = val
+                if reg == 'tac': self.mmio['tac'] = val
+                if reg == 'tma': self.mmio['tma'] = val
+                if reg == 'tima': self.mmio['tima'] = val
+
+        if 'sys' in state_dic.keys():
+            for reg, val in state_dic['sys'].items():
+                if reg == 'divider': self.divider = val
+                if reg == 'totalclks': self.totalclks = val
+
+
     def sprint(self, *args, **kwargs):
         sio = io.StringIO()
         print(*args, **kwargs, file=sio)
@@ -81,7 +96,20 @@ class GameBoyState():
                 print('{:02x} '.format(mem[int(row * colw) + col]), end='', file=sio)
         return sio.getvalue()
     
+    def stringify_mmio(self):
+        sio = io.StringIO()
+        for reg, val in sorted(self.mmio.items()):
+            print(reg.ljust(6), end='', file=sio)
+        print('', file=sio)
+        for reg, val in sorted(self.mmio.items()):
+            s = ('0x{:02x}'.format(val)).ljust(6)
+            print(s, end='', file=sio)
+        return sio.getvalue()
+    
     def compare(self, other):
+
+        ###################
+
         reg_mismatch = False
         for reg in self.regnames:
             if self.regs[reg] != other.regs[reg]:
@@ -98,6 +126,8 @@ class GameBoyState():
             print('[OK] Register are matching...')
             print(self.stringify_regs())
         
+        ###################
+
         def compare_mem(section, colw=32):
             self_mem = getattr(self, section)
             other_mem = getattr(other, section)
@@ -130,14 +160,62 @@ class GameBoyState():
         mem_mismatch |= compare_mem('oam', colw)
         mem_mismatch |= compare_mem('hram', colw)
 
-        print(self.printbuf)
-
         if mem_mismatch:
             print('[XX] Memory mistmatches...')
         else:
             print('[OK] No Memory mismatch...')
 
-        if (not mem_mismatch) and (not reg_mismatch):
+        ###################
+
+        mmio_mismatch = []
+        def check_mmio(reg): 
+            if self.mmio[reg] != other.mmio[reg]: 
+                mmio_mismatch.append(reg)
+        check_mmio('div')
+        check_mmio('tac')
+        check_mmio('tma')
+        check_mmio('tima')
+        
+        if len(mmio_mismatch) != 0: 
+            self.sprint('MMIO Mismatch')
+            self.sprint('\n' + self.origin)
+            self.sprint(self.stringify_mmio())
+            self.sprint('\n' + other.origin)
+            self.sprint(other.stringify_mmio())
+        
+        if len(mmio_mismatch) != 0: 
+            print('[X] MMIO Mismatching: ' + ' '.join(mmio_mismatch))
+        else:
+            print('[OK] MMIO regs are matching')
+            print(self.stringify_mmio())
+
+        ###################
+
+        print(self.printbuf, end='')
+
+        #################
+
+        sysmismatch = False
+        if self.divider != other.divider: 
+            print('[X] Dividers are not equal')
+            print(self.origin + ' - Divider: 0x{:08x}'.format(self.divider ))
+            print(other.origin + ' - Divider: 0x{:08x}'.format(other.divider ))
+            sysmismatch = True
+        else:
+            print('[OK] Sys dividers equal: 0x{:08x}'.format(self.divider))
+
+        if self.totalclks != other.totalclks: 
+            print('[X] Totalclks are not equal')
+            print(self.origin + ' - Totalclks: 0x{:08x}'.format(self.totalclks))
+            print(other.origin + ' - Totalclks: 0x{:08x}'.format(other.totalclks))
+            sysmismatch = True
+        else:
+            print('[OK] Sys Totalclks are equal: 0x{:08x}'.format(self.totalclks))
+
+        ###################
+
+
+        if (not mem_mismatch) and (not reg_mismatch) and (len(mmio_mismatch) == 0) and (not sysmismatch):
             print('[GOOD] ***States are equal!***')
             return True
         else:

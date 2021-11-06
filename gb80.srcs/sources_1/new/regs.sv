@@ -42,7 +42,7 @@ task write_reg8;
     input logic[7:0] val;
 begin
     reg_wr_select <= dest; 
-    reg_wr_value <= {8'b0, val};
+    reg_wr_value <= {7'b0, val};
 end
 endtask
 
@@ -92,7 +92,9 @@ function [7:0] read_reg8;
 endfunction
 
 /* Assign flags register values */
-assign regs.AF = {regs.AF[15:8], flags, 4'b0};
+assign regs.AF[7:0] = {flags.Z, flags.N, flags.H, flags.C, 4'b0};
+
+logic[4:0] schedule_IME = 0;
 
 /* Sequentially write register values depending on 
     Moduel input: register[wr_select] <= wr_value;
@@ -100,12 +102,13 @@ assign regs.AF = {regs.AF[15:8], flags, 4'b0};
 always_ff @(negedge clk) begin
     if (rst) begin
         regs.PC <= 16'h0 - 1; 
-        regs.AF <= 0; 
+        regs.AF[15:8] <= 0; 
         regs.BC <= 0; 
         regs.DE <= 0; 
         regs.HL <= 0; 
         regs.SP <= 0; 
         regs.WZ <= 0; 
+        regs.IME <= 0; 
     end else begin
         case (reg_wr_select) 
             REG_AF: begin 
@@ -132,8 +135,25 @@ always_ff @(negedge clk) begin
             REG_Z:  regs.WZ <= { regs.WZ[15:8], reg_wr_value[7:0] };
             REG_PC_P:  regs.PC <= { reg_wr_value[7:0], regs.PC[7:0] };
             REG_PC_C:  regs.PC <= { regs.PC[15:8], reg_wr_value[7:0] };
+            REG_IME:   begin
+                // If wrote 1, schedule IME to be enabled next machine cycle
+                if (reg_wr_value[0]) schedule_IME <= 4; 
+                else begin
+                    // If wrote 0, cancel IME enable and set IME to zero
+                    regs.IME <= 0; 
+                    schedule_IME <= 0; 
+                end
+            end
             default:      begin end // REG_WRITE_NOP 
         endcase
+
+        // Check if should enable IME 
+        if (schedule_IME > 0 && reg_wr_select != REG_IME) begin
+            if (schedule_IME == 1) begin
+                regs.IME <= 1; 
+            end
+            schedule_IME <= schedule_IME - 1; 
+        end
     end
 end 
 

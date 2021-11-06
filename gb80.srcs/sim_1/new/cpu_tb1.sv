@@ -20,12 +20,14 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module cpu_tb1(
+module cpu_tb1 import cpu_defs::*; (
 
     );
     logic clk, rst;
     logic out; 
-    top_level uut(clk, {rst, 15'b0}); 
+
+    reg_file_s regs_out;
+    top_level uut(clk, {rst, 15'b0}, regs_out); 
 
     always #5 clk = !clk;
 

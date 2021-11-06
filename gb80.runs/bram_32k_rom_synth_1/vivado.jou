@@ -2,8 +2,8 @@
 # Vivado v2021.1 (64-bit)
 # SW Build 3247384 on Thu Jun 10 19:36:33 MDT 2021
 # IP Build 3246043 on Fri Jun 11 00:30:35 MDT 2021
-# Start of session at: Thu Oct 28 23:49:38 2021
-# Process ID: 30304
+# Start of session at: Sat Nov  6 02:26:44 2021
+# Process ID: 27392
 # Current directory: F:/Projects/gb80/gb80.runs/bram_32k_rom_synth_1
 # Command line: vivado.exe -log bram_32k_rom.vds -product Vivado -mode batch -messageDb vivado.pb -notrace -source bram_32k_rom.tcl
 # Log file: F:/Projects/gb80/gb80.runs/bram_32k_rom_synth_1/bram_32k_rom.vds

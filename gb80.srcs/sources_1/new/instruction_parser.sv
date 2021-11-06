@@ -1,5 +1,12 @@
+`define SINGLE_MACHINE_CYCLE                    \
+    current_inst <= inst;                       \
+    if (cycles_left == 0) cycles_left <= 3;     \
+    else if (cycles_left == 1) begin            \
+        prev_inst <= 0; cycles_left <= 0;       \
+    end else cycles_left <= cycles_left - 1; 
+
 task NOP; 
-begin
+begin `SINGLE_MACHINE_CYCLE; 
     decoded_action.act <= CPU_NOP;
     decoded_action.src <= 8'h00;
     decoded_action.dst <= 8'h00;
@@ -9,8 +16,9 @@ end
 endtask
 
 task DO_DIE;
-    $display("preparing to die...");
+begin `SINGLE_MACHINE_CYCLE;
     decoded_action.act <= CPU_DIE;
+end
 endtask
 
 /* 
@@ -159,7 +167,7 @@ endtask
 task LD_REG8_REG8; 
     input reg_select_t dst;
     input reg_select_t src;
-    begin
+    begin `SINGLE_MACHINE_CYCLE;
         decoded_action.act <= WRITE_REG8_REG8;
         decoded_action.dst <= dst;
         decoded_action.src <= src;
@@ -554,7 +562,7 @@ endtask
 */
 task INC8; 
     input reg_select_t select;
-    begin
+    begin `SINGLE_MACHINE_CYCLE;
     decoded_action.act <= ALU_IMM8;
     decoded_action.arg <= ALU_OP_ADD;
     decoded_action.src <= 1;
@@ -570,7 +578,7 @@ endtask
 */
 task DEC8; 
     input reg_select_t select;
-    begin
+    begin `SINGLE_MACHINE_CYCLE;
     decoded_action.act <= ALU_IMM8;
     decoded_action.arg <= ALU_OP_SUB;
     decoded_action.src <= 1;
@@ -664,14 +672,7 @@ task ALU_OP8;
     input reg_select_t dst;
     input reg_select_t src;
     input alu_op_t op;
-    begin
-
-    current_inst <= inst; 
-    if (cycles_left == 0) cycles_left <= 3; 
-    else if (cycles_left == 1) begin 
-        prev_inst <= 0; cycles_left <= 0;
-    end else cycles_left <= cycles_left - 1; 
-
+    begin `SINGLE_MACHINE_CYCLE;
     decoded_action.act <= ALU_REG8;
     decoded_action.arg <= op;
     decoded_action.src <= src;
@@ -685,14 +686,7 @@ task ALU_OP8_BIT;
     input reg_select_t dst;
     input alu_op_t op;
     input wire[7:0] src;
-    begin
-
-    current_inst <= inst; 
-    if (cycles_left == 0) cycles_left <= 3; 
-    else if (cycles_left == 1) begin 
-        prev_inst <= 0; cycles_left <= 0;
-    end else cycles_left <= cycles_left - 1; 
-
+    begin `SINGLE_MACHINE_CYCLE;
     decoded_action.act <= ALU_IMM8;
     decoded_action.arg <= op;
     decoded_action.src <= src;
@@ -858,7 +852,7 @@ endtask
 
 /* Flips all bits in A register */
 task CPL; 
-    begin
+    begin `SINGLE_MACHINE_CYCLE;
     decoded_action.act <= ALU_REG8;
     decoded_action.arg <= ALU_OP_CPL;
     decoded_action.src <= REG_A;
@@ -870,7 +864,7 @@ endtask
 /* Flips all bits in A register */
 task CF; 
     input wire new_cf;
-    begin
+    begin `SINGLE_MACHINE_CYCLE;
     decoded_action.act <= ALU_IMM8;
     decoded_action.arg <= ALU_OP_CF;
     decoded_action.src <= new_cf;
@@ -884,7 +878,7 @@ endtask
     - 1 cycle instruction 
 */
 task DAA; 
-    begin
+    begin `SINGLE_MACHINE_CYCLE;
         decoded_action.act <= ALU_REG8;
         decoded_action.arg <= ALU_OP_DAA;
         decoded_action.dst <= REG_A;
@@ -898,7 +892,7 @@ endtask
     - 1 cycle instruction 
 */
 task JMP_HL; 
-    begin
+    begin `SINGLE_MACHINE_CYCLE;
         decoded_action.act <= FLOW_JMP;
         decoded_action.arg <= REG_HL;
         decoded_action.dst <= 0;
@@ -1110,6 +1104,7 @@ end
 endtask
 
 task RET; 
+    input wire reti;
 begin
     case (cycles_left) 
         /* First Cycle */ 0: 
@@ -1145,6 +1140,10 @@ begin
             decoded_action.dst <= REG_PC_P;
             decoded_action.arg <= inst;
             decoded_action.next_pc <= 1; 
+        end
+        2+8: begin
+            if (reti) decoded_action.act <= CPU_ENABLE_INTERRUPTS;
+            cycles_left <= 2+8-1;
         end
         default: begin
             cycles_left <= cycles_left - 1; 
@@ -1283,6 +1282,75 @@ begin
             decoded_action.arg <= inst;         // MSB = inst
             decoded_action.src <= prev_inst;
             decoded_action.next_pc <= 1; 
+        end
+        default: begin
+            cycles_left <= cycles_left - 1; 
+        end
+    endcase
+end
+endtask
+
+task SET_IME; 
+    input value;
+begin `SINGLE_MACHINE_CYCLE;
+    // Set IME=value
+    decoded_action.act <= WRITE_REG8_IMM; 
+    decoded_action.dst <= REG_IME;
+    decoded_action.arg <= value;
+    decoded_action.src <= 0;
+    decoded_action.next_pc <= 1; 
+end
+endtask
+
+/* 
+    Handle Interrupt ISR context switch
+*/
+task CALL_ISR; 
+    input wire [7:0] vector;
+    input wire [7:0] if_mask;
+begin
+    case (cycles_left) 
+        /* First Cycle */ 0: 
+        begin cycles_left <= 20 - 1;
+            current_inst <= 0; 
+            // Set IME=0 and IF disable active bit
+            decoded_action.act <= CPU_DISABLE_INTERRUPTS; 
+            decoded_action.src <= current_isr & if_mask;
+            decoded_action.next_pc <= 0; 
+        end
+        /* Second Cycle */ 16: 
+        begin cycles_left <= 16 - 1; 
+            decoded_action.act <= CPU_NOP; 
+            decoded_action.next_pc <= 0; 
+        end
+        /* Third Cycle */ 12:
+        begin cycles_left <= 12 - 1;
+            // Write PC into memory at stack pointer --
+            decoded_action.act <= WRITE_MEM8_REG8;
+            decoded_action.dst <= REG_SP;   // Low byte of address
+            decoded_action.src <= REG_PC_P;
+            decoded_action.arg <= 2;        // decrement SP after
+            decoded_action.next_pc <= 0; 
+        end
+        /* Fourth Cycle */ 8:
+        begin cycles_left <= 8 - 1;
+            decoded_action.act <= WRITE_MEM8_REG8;
+            decoded_action.dst <= REG_SP;   // casting reg_select to logic (kinda sus)
+            decoded_action.src <= REG_PC_C;
+            decoded_action.arg <= 0;
+            decoded_action.next_pc <= 0; 
+        end
+        /* Fith Cycle */ 4:
+        begin cycles_left <= 4 - 1;
+            // jmp to interrupt vector
+            decoded_action.act <= FLOW_JMP_IMM;
+            decoded_action.arg <= 0;
+            decoded_action.src <= vector;
+            decoded_action.next_pc <= 1; 
+        end
+        1: begin 
+            current_isr <= 0; 
+            cycles_left <= 0; 
         end
         default: begin
             cycles_left <= cycles_left - 1; 

@@ -35,6 +35,11 @@ def parse_sna(path):
     # 160B@ 0xFE00 - 0xFE9F
     oam = None
 
+    mmio = {}
+
+    sys = {}
+
+
     c = 0
     for i in range(len(data)):
         c += 1
@@ -65,15 +70,39 @@ def parse_sna(path):
         if data[i:i+3] == b'OAM':
             oam = data[i+8:i+8+160]
 
-        if data[i:i+4] == b'\xff\x55\xfe\xff':
-            print("FOUDNDND", i)
-    
+        # MMIO 
+        if data[i:i+3] == b'DIV':
+            mmio['div'] = int.from_bytes(data[i+8:i+8+1], byteorder='little')
+
+        if data[i:i+3] == b'TAC':
+            mmio['tac'] = int.from_bytes(data[i+8:i+8+1], byteorder='little')
+
+        if data[i:i+3] == b'TMA':
+            mmio['tma'] = int.from_bytes(data[i+8:i+8+1], byteorder='little')
+
+        if data[i:i+4] == b'TIMA':
+            mmio['tima'] = int.from_bytes(data[i+9:i+9+1], byteorder='little')
+
+        if data[i:i+9] == b'totalclks':
+            clks = int.from_bytes(data[i+14:i+14+4], byteorder='little')
+            sys['totalclks'] = (clks // 2) * 4  # convert from 1 nop in doublespeed (4ds clks) to 1 clk in single speed
+
+        if data[i:i+7] == b'divider':
+            b = data[i+12:i+12+4]
+            #print(b)
+            if b[-1] == 0x80:
+                b[-1] -= 0x80   # for some reason...
+            clks = int.from_bytes(b, byteorder='little')
+            sys['divider'] = (clks // 2) * 4  # convert from 1 nop in doublespeed (4ds clks) to 1 clk in single speed
+
     sna = {
         'regs': regs,
         'oam': oam,
         'vram': vram,
         'wram': wram,
-        'hram': hram
+        'hram': hram,
+        'mmio': mmio,
+        'sys': sys
     }
 
     return sna
@@ -101,3 +130,5 @@ def print_sna(sna):
 if __name__ == "__main__": 
     res = parse_sna('F:\\Projects\\gb80\\software\\emu\\run.sna')
     print(hex(res['regs']['SP']))
+    print('mmio')
+    print(res['mmio'])

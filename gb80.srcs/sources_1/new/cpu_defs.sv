@@ -39,7 +39,18 @@ package cpu_defs;
         logic [15:0] SP; 
         logic [15:0] PC; 
         logic [15:0] WZ;    // Hidden temp reg 
+        logic [7:0] IF;
+        logic [7:0] IE;
+        logic IME; 
     } reg_file_s; 
+
+    typedef struct {
+        logic vblank; 
+        logic lcd_stat; 
+        logic timer; 
+        logic joypad; 
+    } interrupt_lines_s; 
+
 
     /* Register selection names. Essentially keys to reegister dict */
     typedef enum { 
@@ -48,7 +59,8 @@ package cpu_defs;
         REG_A, REG_F, REG_B, REG_C, REG_D, REG_E, REG_H, REG_L, 
         REG_S, REG_P,           // exist internally
         REG_W, REG_Z, REG_WZ,   // hidden
-        REG_PC_P, REG_PC_C
+        REG_PC_P, REG_PC_C, 
+        REG_IME
     } reg_select_t;
 
     /* CPU FSM states */
@@ -62,6 +74,8 @@ package cpu_defs;
     /* An general / catagorical action the CPU FSM can execute */
     typedef enum {
         CPU_NOP, CPU_DIE,
+        CPU_DISABLE_INTERRUPTS,
+        CPU_ENABLE_INTERRUPTS,
 
         /* Reg Ops */
         WRITE_REG16_IMM, 

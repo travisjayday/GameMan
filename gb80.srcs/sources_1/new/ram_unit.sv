@@ -38,34 +38,41 @@ module bram_main_ram_m (
     mem_if.slave in);
 
     bram_main_ram unit(
-        .addra(in.addr_select[14:0]),
         .clka(clk), 
+        .addra(in.addr_select[14:0]),
         .dina(in.write_value),
         .douta(in.read_out),
-        .wea(in.write_enable)
+        .wea(in.write_enable),
+
+        .clkb(clk),
+        .addrb(0),
+        .dinb(0),
+        .doutb(outb),
+        .web(0)
         );
+    logic [7:0] outb;
 endmodule
 
 `define ADDR_IN_RNG(LO, HI) \
-    req.addr_select >= LO && req.addr_select < HI
+    (req.addr_select >= LO && req.addr_select < HI)
 
-`define MAP_INTERFACE(DST_IF, BASE_OFFSET, START_OFFSET)        \
+`define MAP_INTERFACE(DST_IF, BASE_OFFSET, START_OFFSET)                    \
     DST_IF.addr_select  = req.addr_select - BASE_OFFSET + START_OFFSET;     \
     DST_IF.write_value  = req.write_value;                                  \
     req.read_out        = DST_IF.read_out;                                  \
-    DST_IF.write_enable = req.write_enable; 
+    DST_IF.write_enable = req.write_enable;                                 \
+    if (!(req.addr_select >= 16'hFF04 && req.addr_select <= 16'hFF07))      \
+        mmio_timer_if.write_enable = 0; 
 
-module mmu_m(input wire clk, mem_if.slave req);
-
-    // Contains:    Cartridge ROM
-    // Size:        32KB 
-    mem_if rom_if(); 
-    bram_32k_rom_m rom(clk, rom_if);
-
-    // Contains: VRAM   EXT RAM     WRAM    OAM     HRAM
-    // Size:     8KB    8KB         4KB     160B    128B
-    mem_if mram_if(); 
-    bram_main_ram_m mram (clk, mram_if);
+module mmu_m(
+    input wire clk, 
+    input wire rst,    
+    mem_if.slave req, 
+    mem_if.master rom_if, 
+    mem_if.master mram_if,
+    mem_if.master mmio_timer_if,
+    mem_if.master mmio_interrupts_if
+    );
 
     always_comb begin
         if      /* ROM (0x0000 - 0x7FFF) */
@@ -97,10 +104,25 @@ module mmu_m(input wire clk, mem_if.slave req);
             $display("Request to unot usable ram was made...");
             $finish;
         end 
-        else if /* IO REGISTERS (0xFF00 - 0xFF7F) */
-        (`ADDR_IN_RNG(16'hFF00, 16'hFF80)) 
+        else if /* IO REGISTERS (0xFF00 - 0xFF7F, 0xFFFF) */
+        (`ADDR_IN_RNG(16'hFF00, 16'hFF80) || req.addr_select == 16'hFFFF) 
         begin
-            
+            // 0xFF04 - DIV - Divider Register (R/W*)
+            if      (req.addr_select == 16'hFF04) begin `MAP_INTERFACE(mmio_timer_if, 0, 0); end
+            // 0xFF05 - TIMA - Timer Counter (R/W)
+            else if (req.addr_select == 16'hFF05) begin `MAP_INTERFACE(mmio_timer_if, 0, 0); end
+            // 0xFF05 - TMA - Timer Modulo (R/W)
+            else if (req.addr_select == 16'hFF06) begin `MAP_INTERFACE(mmio_timer_if, 0, 0); end
+            // 0xFF07 - TAC - Timer Control (R/W)
+            else if (req.addr_select == 16'hFF07) begin `MAP_INTERFACE(mmio_timer_if, 0, 0); end
+            // 0xFF0F - IF - Interrupt Flags (R/W)
+            else if (req.addr_select == 16'hFF0F) begin `MAP_INTERFACE(mmio_interrupts_if, 0, 0); end
+            // 0xFFFF - IE - Interrupt Enable (R/W)
+            else if (req.addr_select == 16'hFFFF) begin `MAP_INTERFACE(mmio_interrupts_if, 0, 0); end
+            else begin 
+                mmio_timer_if.write_enable = 0;
+                mmio_interrupts_if.write_enable = 0;
+            end
         end
         else if /* HRAM (0xFF80 - 0xFFFE) */
         (`ADDR_IN_RNG(16'hFF80, 16'hFFFF))
@@ -108,11 +130,6 @@ module mmu_m(input wire clk, mem_if.slave req);
             $display("Requerst to HRAM: 0x%x WE: %x VAL: %x", mram_if.addr_select, mram_if.write_enable, mram_if.write_value);
             `MAP_INTERFACE(mram_if, 16'hFF80, 16'hE0A0); // map to mram_if[0x60A0:0x6120]
         end 
-        else if /* IE REGISTER (0xFFFF) */ 
-        (req.addr_select == 16'hFFFF)
-        begin
-
-        end
         else begin
             $display("MMU Request to 0x%x unkown...", req.addr_select);
         end

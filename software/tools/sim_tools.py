@@ -9,6 +9,8 @@ def parse_simdump(path):
     wram = None
     oam = None
     hram = None
+    mmio = {}
+    sys = {}
 
     sections = data.split('SECTION ')
     for section in sections:
@@ -21,6 +23,16 @@ def parse_simdump(path):
             regnames = ['AF', 'BC', 'DE', 'HL', 'SP', 'PC']
             for i in range(len(regnames)):
                 regs[regnames[i]] = int(regdata[i], 16)
+        if header == 'MMIO':
+            regnames = ['div', 'tac', 'tma', 'tima']
+            regdata = lines[2].split()
+            for i in range(len(regnames)):
+                mmio[regnames[i]] = int(regdata[i], 16)
+        if header == 'SYS':
+            regnames = ['totalclks', 'divider']
+            regdata = lines[2].split()
+            for i in range(len(regnames)):
+                sys[regnames[i]] = int(regdata[i], 16)
         if header == 'MEM': 
             hexdata = lines[1:]
             intbuffer = []
@@ -56,11 +68,14 @@ def parse_simdump(path):
         'eram': eram,
         'wram': wram,
         'oam': oam,
-        'hram': hram
+        'hram': hram,
+        'mmio': mmio,
+        'sys': sys
     }
 
     return state
 
 
 if __name__ == "__main__":
-    parse_simdump('F:\\Projects\\gb80\\gb80.sim\\sim_1\\behav\\xsim\\simdump.hex')
+    s = parse_simdump('F:\\Projects\\gb80\\gb80.sim\\sim_1\\behav\\xsim\\simdump.hex')
+    print(s)

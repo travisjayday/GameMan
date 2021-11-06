@@ -70,7 +70,7 @@ proc create_report { reportName command } {
   }
 }
 OPTRACE "synth_1" START { ROLLUP_AUTO }
-set_msg_config -id {Common 17-41} -limit 10000000
+set_param chipscope.maxJobs 4
 OPTRACE "Creating in-memory project" START { }
 create_project -in_memory -part xc7a100tcsg324-1
 
@@ -93,6 +93,8 @@ read_verilog -library xil_defaultlib -sv {
   F:/Projects/gb80/gb80.srcs/sources_1/new/cpu_defs.sv
   F:/Projects/gb80/gb80.srcs/sources_1/new/cpu.sv
   F:/Projects/gb80/gb80.srcs/sources_1/new/decoder.sv
+  F:/Projects/gb80/gb80.srcs/sources_1/new/mmio_div.sv
+  F:/Projects/gb80/gb80.srcs/sources_1/new/mmio_interrupts.sv
   F:/Projects/gb80/gb80.srcs/sources_1/new/ram_unit.sv
   F:/Projects/gb80/gb80.srcs/sources_1/new/top_level.sv
 }

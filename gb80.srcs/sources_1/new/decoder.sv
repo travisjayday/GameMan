@@ -8,6 +8,7 @@ module decoder_m import cpu_defs::*; (
     input wire rst,
     input wire[7:0] inst,
     input flags_s flags,
+    input wire[7:0] IF,
     output decoded_action_s decoded_action
 );
 
@@ -20,6 +21,7 @@ module decoder_m import cpu_defs::*; (
     */ 
     logic[5:0] cycles_left;     
     logic[7:0] current_inst; 
+    logic[7:0] current_isr; 
 
     // previous instruction. used sometimes. (see pop)
     logic[7:0] prev_inst; 
@@ -35,53 +37,68 @@ module decoder_m import cpu_defs::*; (
         if (rst) begin
             cycles_left <= 0;
             decoded_action.next_pc <= 1; 
-            decoded_action.act = CPU_NOP;
-            decoded_action.src = 0; 
-            decoded_action.dst = 0; 
-            decoded_action.arg = 0; 
+            decoded_action.act <= CPU_NOP;
+            decoded_action.src <= 0; 
+            decoded_action.dst <= 0; 
+            decoded_action.arg <= 0; 
+            current_isr <= 0; 
             prev_inst <= 0;
         end else begin
-            if (prev_inst != 8'hCB) begin
-                // Switch on the first hex number of current executing instruction 
-                case (active_inst[7:4]) 
-                    4'h0: ROW0(active_inst[3:0]);
-                    4'h1: ROW1(active_inst[3:0]);
-                    4'h2: ROW2(active_inst[3:0]);
-                    4'h3: ROW3(active_inst[3:0]);
-                    4'h4: ROW4(active_inst[3:0]);
-                    4'h5: ROW5(active_inst[3:0]);
-                    4'h6: ROW6(active_inst[3:0]);
-                    4'h7: ROW7(active_inst[3:0]);
-                    4'h8: ROW8(active_inst[3:0]);
-                    4'h9: ROW9(active_inst[3:0]);
-                    4'hA: ROWA(active_inst[3:0]);
-                    4'hB: ROWB(active_inst[3:0]);
-                    4'hC: ROWC(active_inst[3:0]);
-                    4'hD: ROWD(active_inst[3:0]);
-                    4'hE: ROWE(active_inst[3:0]);
-                    4'hF: ROWF(active_inst[3:0]);
-                    default: unkown_opcode();
-                endcase
+            // If we're starting a new instruction and an interrupt needs to be
+            // serviced, service that interrupt
+
+            if (current_isr) begin
+                if      (current_isr[0]) CALL_ISR(8'h40, 8'b1111_1110); // Vsync ISR
+                else if (current_isr[1]) CALL_ISR(8'h48, 8'b1111_1101); // LCD Stat ISR
+                else if (current_isr[2]) CALL_ISR(8'h50, 8'b1111_1011); // Timer ISR
+                else if (current_isr[4]) CALL_ISR(8'h60, 8'b1110_1111); // Joypad ISR
             end else begin
-                case (active_inst[7:4]) 
-                    4'h0: CB_ROW0(active_inst[3:0]);
-                    4'h1: CB_ROW1(active_inst[3:0]);
-                    4'h2: CB_ROW2(active_inst[3:0]);
-                    4'h3: CB_ROW3(active_inst[3:0]);
-                    4'h4: CB_ROW4(active_inst[3:0]);
-                    4'h5: CB_ROW5(active_inst[3:0]);
-                    4'h6: CB_ROW6(active_inst[3:0]);
-                    4'h7: CB_ROW7(active_inst[3:0]);
-                    4'h8: CB_ROW8(active_inst[3:0]);
-                    4'h9: CB_ROW9(active_inst[3:0]);
-                    4'hA: CB_ROWA(active_inst[3:0]);
-                    4'hB: CB_ROWB(active_inst[3:0]);
-                    4'hC: CB_ROWC(active_inst[3:0]);
-                    4'hD: CB_ROWD(active_inst[3:0]);
-                    4'hE: CB_ROWE(active_inst[3:0]);
-                    4'hF: CB_ROWF(active_inst[3:0]);
-                    default: unkown_opcode();
-                endcase
+                // Check if should execute ISR transition on next cycle
+                current_isr <= (cycles_left == 1 && IF != 0 && prev_inst != 8'hCB) ? IF : 0;
+                if (prev_inst != 8'hCB) begin
+                    // Switch on the first hex number of current executing instruction 
+                    case (active_inst[7:4]) 
+                        4'h0: ROW0(active_inst[3:0]);
+                        4'h1: ROW1(active_inst[3:0]);
+                        4'h2: ROW2(active_inst[3:0]);
+                        4'h3: ROW3(active_inst[3:0]);
+                        4'h4: ROW4(active_inst[3:0]);
+                        4'h5: ROW5(active_inst[3:0]);
+                        4'h6: ROW6(active_inst[3:0]);
+                        4'h7: ROW7(active_inst[3:0]);
+                        4'h8: ROW8(active_inst[3:0]);
+                        4'h9: ROW9(active_inst[3:0]);
+                        4'hA: ROWA(active_inst[3:0]);
+                        4'hB: ROWB(active_inst[3:0]);
+                        4'hC: ROWC(active_inst[3:0]);
+                        4'hD: ROWD(active_inst[3:0]);
+                        4'hE: ROWE(active_inst[3:0]);
+                        4'hF: ROWF(active_inst[3:0]);
+                        default: unkown_opcode();
+                    endcase
+                end else begin
+                    // If the last instruction was CB-prefixed, 
+                    // switch instead on the CB_ rows
+                    case (active_inst[7:4]) 
+                        4'h0: CB_ROW0(active_inst[3:0]);
+                        4'h1: CB_ROW1(active_inst[3:0]);
+                        4'h2: CB_ROW2(active_inst[3:0]);
+                        4'h3: CB_ROW3(active_inst[3:0]);
+                        4'h4: CB_ROW4(active_inst[3:0]);
+                        4'h5: CB_ROW5(active_inst[3:0]);
+                        4'h6: CB_ROW6(active_inst[3:0]);
+                        4'h7: CB_ROW7(active_inst[3:0]);
+                        4'h8: CB_ROW8(active_inst[3:0]);
+                        4'h9: CB_ROW9(active_inst[3:0]);
+                        4'hA: CB_ROWA(active_inst[3:0]);
+                        4'hB: CB_ROWB(active_inst[3:0]);
+                        4'hC: CB_ROWC(active_inst[3:0]);
+                        4'hD: CB_ROWD(active_inst[3:0]);
+                        4'hE: CB_ROWE(active_inst[3:0]);
+                        4'hF: CB_ROWF(active_inst[3:0]);
+                        default: unkown_opcode();
+                    endcase
+                end
             end
         end
     end
@@ -106,6 +123,13 @@ module decoder_m import cpu_defs::*; (
             $display("Encountered unkown instruction: %x", inst);
             decoded_action.act <= CPU_DIE;
         end
+    end
+    endtask 
+    
+    task BREAKPOINT(); 
+    begin
+        $display("Reached Breakpoint. Dying...");
+        decoded_action.act <= CPU_DIE;
     end
     endtask 
 
@@ -190,7 +214,7 @@ module decoder_m import cpu_defs::*; (
     endcase endtask 
 
     task ROW4; input logic [3:0] col; case (col)
-        4'h0: LD_REG8_REG8(REG_B, REG_B);                           // LD B, B
+        4'h0: BREAKPOINT();                           // LD B, B
         4'h1: LD_REG8_REG8(REG_B, REG_C);                           // LD B, C
         4'h2: LD_REG8_REG8(REG_B, REG_D);                           // LD B, D
         4'h3: LD_REG8_REG8(REG_B, REG_E);                           // LD B, E
@@ -359,7 +383,7 @@ module decoder_m import cpu_defs::*; (
         4'h6: ALU_OP8_IMM(REG_A, ALU_OP_ADD);                       // ADD A, d8
         4'h7: RST(8'h00);                                           // RST 00H
         4'h8: RET_CC(/*condition=*/flags.Z);                        // RET Z
-        4'h9: RET();                                                // RET
+        4'h9: RET(0);                                               // RET
         4'hA: JMP_CC(/*condition=*/flags.Z);                        // JP Z, a16
         4'hB: PREFIX_CB();                                          // PREFIX CB
         4'hC: CALL_CC(/*condition=*/flags.Z);                       // CALL Z, a16
@@ -381,7 +405,7 @@ module decoder_m import cpu_defs::*; (
         4'h6: ALU_OP8_IMM(REG_A, ALU_OP_SUB);                       // SUB A, d8
         4'h7: RST(8'h10);                                           // RST 10H
         4'h8: RET_CC(/*condition=*/flags.C);                        // RET C
-        // TODO: RETI 
+        4'h9: RET(1);                                               // RETI
         4'hA: JMP_CC(/*condition=*/flags.C);                        // JP C, a16
         //hB: illegal opcode 
         4'hC: CALL_CC(/*condition=*/flags.C);                       // CALL C, a16
@@ -415,7 +439,7 @@ module decoder_m import cpu_defs::*; (
         4'h0: LD_REG_HRAM_IMM(REG_A);                               // LDH A, (a8)
         4'h1: POP(REG_AF);                                          // POP AF
         4'h2: LD_REG_HRAM_REG(REG_A, REG_C);                        // LD A, (C)
-        // TODO: DI
+        4'h3: SET_IME(0);                                           // DI
         //h4: illegal opcode
         4'h5: PUSH(REG_A, REG_F);                                   // PUSH AF
         4'h6: ALU_OP8_IMM(REG_A, ALU_OP_OR);                        // AND OR, d8
@@ -423,7 +447,7 @@ module decoder_m import cpu_defs::*; (
         4'h8: OFFSET_SP_INTO_HL();                                  // LD HL, SP+r8
         4'h9: LD_REG16_REG16(REG_SP, REG_HL);                       // LD SP, HL
         4'hA: LD_REG8_IMMADDR(REG_A);                               // LD A, (a16)
-        // TODO: EI
+        4'hB: SET_IME(1);                                           // IE
         //hC: illegal opcode
         //hD: illegal opcode
         4'hE: ALU_OP8_IMM(REG_A, ALU_OP_CP);                        // CP d8
@@ -752,6 +776,5 @@ module decoder_m import cpu_defs::*; (
     endcase endtask
 
     `include "instruction_parser.sv"
-    `include "instruction_parser_cb.sv"
 
 endmodule
