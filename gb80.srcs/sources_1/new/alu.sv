@@ -173,12 +173,14 @@ function [11:0] alu_op8;
                 out = dst;
             end
             ALU_OP_BIT_RES: begin
-                dst[src] = 0;
-                out = dst;
+                tmp = dst;
+                tmp[src] = 0;
+                out = tmp;
             end
             ALU_OP_BIT_SET: begin
-                dst[src] = 1;
-                out = dst;
+                tmp = dst;
+                tmp[src] = 1;
+                out = tmp;
             end
             default: begin
                 $display("ALU8 trying to exec unkowon action");

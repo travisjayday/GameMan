@@ -19,15 +19,21 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-module cpu import cpu_defs::*;(
+module cpu_m import cpu_defs::*;(
     input wire clk, 
     input wire rst,
-    input reg_file_s regs,
     mem_if.master mmu,
-    output logic cpu_died
+    input wire[7:0] mmio_reg_IF,
+    input wire[7:0] mmio_reg_IE,
+    output logic cpu_died,
+    output reg_file_s regs_out 
 );
 
     /* Register file read / write lines */
+    reg_file_s regs;
+    assign regs_out = regs;
+    assign regs.IF = mmio_reg_IF;
+    assign regs.IE = mmio_reg_IE;
     reg_select_t reg_wr_select; 
     logic[15:0] reg_wr_value; 
     flags_s flags; 
@@ -38,6 +44,10 @@ module cpu import cpu_defs::*;(
     logic[7:0] val;
     logic[7:0] inst;
     assign out = totalclks;
+
+    // Check if an interrupt will be executed at next opportunity
+    logic interrupt_happening; 
+    assign interrupt_happening = regs.IME && (regs.IF & regs.IE);
 
     // Instruction is always the output of MMU
     assign inst = mmu.read_out;
@@ -50,17 +60,17 @@ module cpu import cpu_defs::*;(
     logic [11:0] alu_res8; 
     logic [19:0] alu_res16; 
 
-    // Check if an interrupt will be executed at next opportunity
-    logic interrupt_happening; 
-    assign interrupt_happening = regs.IME && (regs.IF & regs.IE);
-
     always_ff @(posedge clk) begin
         if (rst) begin
-            totalclks <= 0; 
+            totalclks <= 4; 
             val <= 16;
             cpu_state <= DECODE;
             cpu_died <= 0; 
             flags <= 0; 
+            reg_wr_select <= REG_UNKOWN;
+            reg_wr_value <= 0; 
+            mmu.write_enable <= 0; 
+            mmu.addr_select <= 0; 
         end else begin
             // See http://www.z80.info/z80arki.htm for overlapping execution model
             // Each state is commented with it's T-state from the diagram
@@ -102,6 +112,10 @@ module cpu import cpu_defs::*;(
                         write_reg16(reg_select_t'(decoded_action.dst), 
                             {decoded_action.arg, decoded_action.src});
                         mmu.addr_select <= read_reg16(REG_PC) + 1; 
+                        // intercept write to AF
+                        if (reg_select_t'(decoded_action.dst) == REG_AF) begin
+                            flags <= decoded_action.src[7:4];
+                        end
                     end
                     WRITE_REG8_REG8: begin
                         write_reg8(

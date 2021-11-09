@@ -92,7 +92,7 @@ function [7:0] read_reg8;
 endfunction
 
 /* Assign flags register values */
-assign regs.AF[7:0] = {flags.Z, flags.N, flags.H, flags.C, 4'b0};
+assign regs.AF[7:4] = flags;
 
 logic[4:0] schedule_IME = 0;
 
@@ -101,8 +101,9 @@ logic[4:0] schedule_IME = 0;
 */
 always_ff @(negedge clk) begin
     if (rst) begin
-        regs.PC <= 16'h0 - 1; 
+        regs.PC <= 0; 
         regs.AF[15:8] <= 0; 
+        regs.AF[3:0] <= 0; 
         regs.BC <= 0; 
         regs.DE <= 0; 
         regs.HL <= 0; 
@@ -114,7 +115,6 @@ always_ff @(negedge clk) begin
             REG_AF: begin 
                 // If write to AF, update flags. See Pop AF instruction.
                 regs.AF[15:8] <= reg_wr_value[15:8];
-                flags <= reg_wr_value[7:4];
             end
             REG_BC: regs.BC <= reg_wr_value;
             REG_DE: regs.DE <= reg_wr_value; 
@@ -122,7 +122,7 @@ always_ff @(negedge clk) begin
             REG_SP: regs.SP <= reg_wr_value; 
             REG_PC: regs.PC <= reg_wr_value;
             REG_WZ: regs.WZ <= reg_wr_value;
-            REG_A:  regs.AF <= { reg_wr_value[7:0], regs.AF[7:0] };
+            REG_A:  regs.AF[15:8] <= reg_wr_value[7:0]; //, regs.AF[7:0] };
             REG_B:  regs.BC <= { reg_wr_value[7:0], regs.BC[7:0] }; 
             REG_C:  regs.BC <= { regs.BC[15:8], reg_wr_value[7:0] }; 
             REG_D:  regs.DE <= { reg_wr_value[7:0], regs.DE[7:0] };

@@ -47,14 +47,18 @@ module decoder_m import cpu_defs::*; (
             // If we're starting a new instruction and an interrupt needs to be
             // serviced, service that interrupt
 
-            if (current_isr) begin
-                if      (current_isr[0]) CALL_ISR(8'h40, 8'b1111_1110); // Vsync ISR
-                else if (current_isr[1]) CALL_ISR(8'h48, 8'b1111_1101); // LCD Stat ISR
-                else if (current_isr[2]) CALL_ISR(8'h50, 8'b1111_1011); // Timer ISR
-                else if (current_isr[4]) CALL_ISR(8'h60, 8'b1110_1111); // Joypad ISR
+            if (current_isr || (cycles_left == 0 && IF != 0 && prev_inst != 8'hCB)) begin
+                if      (current_isr[0]||IF[0]) CALL_ISR(8'h40, 8'b1111_1110); // Vsync ISR
+                else if (current_isr[1]||IF[1]) CALL_ISR(8'h48, 8'b1111_1101); // LCD Stat ISR
+                else if (current_isr[2]||IF[2]) CALL_ISR(8'h50, 8'b1111_1011); // Timer ISR
+                else if (current_isr[4]||IF[4]) CALL_ISR(8'h60, 8'b1110_1111); // Joypad ISR
+                else begin
+                    $display("CPU trying to execute unkown ISR...");
+                    $finish();
+                end
             end else begin
                 // Check if should execute ISR transition on next cycle
-                current_isr <= (cycles_left == 1 && IF != 0 && prev_inst != 8'hCB) ? IF : 0;
+                //current_isr <= (cycles_left == 1 && IF != 0 && prev_inst != 8'hCB) ? IF : 0;
                 if (prev_inst != 8'hCB) begin
                     // Switch on the first hex number of current executing instruction 
                     case (active_inst[7:4]) 

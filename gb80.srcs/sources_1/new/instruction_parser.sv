@@ -564,7 +564,7 @@ task INC8;
     input reg_select_t select;
     begin `SINGLE_MACHINE_CYCLE;
     decoded_action.act <= ALU_IMM8;
-    decoded_action.arg <= ALU_OP_ADD;
+    decoded_action.arg <= ALU_OP_INC8;
     decoded_action.src <= 1;
     decoded_action.dst <= select;
     decoded_action.next_pc <= 1; 
@@ -580,7 +580,7 @@ task DEC8;
     input reg_select_t select;
     begin `SINGLE_MACHINE_CYCLE;
     decoded_action.act <= ALU_IMM8;
-    decoded_action.arg <= ALU_OP_SUB;
+    decoded_action.arg <= ALU_OP_DEC8;
     decoded_action.src <= 1;
     decoded_action.dst <= select;
     decoded_action.next_pc <= 1; 
@@ -1312,6 +1312,7 @@ begin
     case (cycles_left) 
         /* First Cycle */ 0: 
         begin cycles_left <= 20 - 1;
+            current_isr <= IF; 
             current_inst <= 0; 
             // Set IME=0 and IF disable active bit
             decoded_action.act <= CPU_DISABLE_INTERRUPTS; 

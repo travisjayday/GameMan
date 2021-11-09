@@ -15,7 +15,7 @@ SECTION "Header", ROM0[$00]
 	die
 
 SECTION "TIMER_ISR", ROM0[$50]
-	ld bc, $bbbb
+	ld bc, $bbb0
 	nop
 	reti
 	

@@ -7,10 +7,17 @@ module mmio_timer_m(
     output logic interrupt
     );
 
+    /* MMIO Regs */
+    logic[31:0] sys_counter;        // 0xFF04
+    logic [7:0] tima;               // 0xFF05
+    logic [7:0] tma;                // 0xFF06
+    logic [2:0] tac;                // 0xFF07
+
     /* Ouput for each register */
     always_comb begin
         case (req.addr_select) 
             16'hFF04: req.read_out = sys_counter[15:8];
+            16'hFF05: req.read_out = tima;
             16'hFF06: req.read_out = tma;
             16'hFF07: req.read_out = {~5'b0, tac[2:0]};
             default:  req.read_out = 8'haa;
@@ -18,13 +25,11 @@ module mmio_timer_m(
     end
 
     /* 0xFF04 - DIV - Divider Register (R/W*) */
-    logic[31:0] sys_counter;
     logic[1:0] div_we_hi; 
     always_ff @(posedge clk) begin
         if (rst) begin
             sys_counter <= 4; 
             div_we_hi <= 0;
-            interrupt <= 0; 
         end
         else begin 
             // WE has been hi for 1 cycle. Reset counter on next rising edge
@@ -32,13 +37,7 @@ module mmio_timer_m(
                 sys_counter <= 0; 
             end else begin
                 sys_counter <= sys_counter + 1;  
-                if (sys_counter == 8'hff) begin
-                    interrupt <= 1; 
-                end
             end
-
-            // keep interrupt high for only one cycle
-            if (interrupt == 1) interrupt <= 0; 
 
             // Keep track of how long WE has been hi for
             if (req.write_enable && req.addr_select == 16'hFF04) 
@@ -49,7 +48,6 @@ module mmio_timer_m(
     end
 
     /* 0xFF05 - TIMA - Timer Counter (R/W) */
-    logic [7:0] tima; 
     logic [2:0] tima_we_hi; 
     logic [31:0] prev_sys_counter;
     logic [4:0] div_index;
@@ -62,10 +60,14 @@ module mmio_timer_m(
             2'b11: div_index = 7;
         endcase
     end
+    assign interrupt =(~(sys_counter[div_index] & tac[2]) & 
+                     (prev_sys_counter[div_index] & old_tac_en))  && tima == 8'hff ? 1 : 0;
+
     always_ff @(posedge clk) begin
         if (rst) begin
             tima <= 0; 
             tima_we_hi <= 0;
+            //interrupt <= 0; 
         end
         else begin 
             // WE has been hi for 1 cycle.
@@ -77,8 +79,15 @@ module mmio_timer_m(
                      (prev_sys_counter[div_index] & old_tac_en)) begin
                     // increment tima
                     tima <= tima + 1;
+
+                    if (tima == 8'hff) begin
+                        //interrupt <= 1; 
+                    end
                 end
             end
+
+            // keep interrupt high for only one cycle
+            //if (interrupt == 1) interrupt <= 0; 
 
             // Keep track of how long WE has been hi for
             if (req.write_enable && req.addr_select == 16'hFF05) 
@@ -93,7 +102,6 @@ module mmio_timer_m(
     end
 
     /* 0xFF06 - TMA - Timer Modulo (R/W) */
-    logic [7:0] tma; 
     logic [2:0] tma_we_hi; 
     always_ff @(posedge clk) begin
         if (rst) begin
@@ -115,7 +123,6 @@ module mmio_timer_m(
     end
 
     /* 0xFF07 - TAC - Timer Control (R/W) */
-    logic [2:0] tac; 
     logic [2:0] tac_we_hi; 
     always_ff @(posedge clk) begin
         if (rst) begin

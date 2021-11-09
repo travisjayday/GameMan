@@ -26,8 +26,8 @@ module cpu_tb1 import cpu_defs::*; (
     logic clk, rst;
     logic out; 
 
-    reg_file_s regs_out;
-    top_level uut(clk, {rst, 15'b0}, regs_out); 
+    logic[15:0] led;
+    top_level uut(clk, {rst, 15'b0}, led); 
 
     always #5 clk = !clk;
 
@@ -37,7 +37,11 @@ module cpu_tb1 import cpu_defs::*; (
 
         clk = 0; 
         rst = 1;     
-        #15
+        #1100;
         rst = 0;
+        #5000
+        rst = 1; 
+        #1100
+        rst = 0; 
     end
 endmodule

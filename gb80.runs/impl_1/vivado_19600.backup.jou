@@ -1,0 +1,12 @@
+#-----------------------------------------------------------
+# Vivado v2021.1 (64-bit)
+# SW Build 3247384 on Thu Jun 10 19:36:33 MDT 2021
+# IP Build 3246043 on Fri Jun 11 00:30:35 MDT 2021
+# Start of session at: Sun Nov  7 00:25:04 2021
+# Process ID: 19600
+# Current directory: F:/Projects/gb80/gb80.runs/impl_1
+# Command line: vivado.exe -log bram_32k_rom_m.vdi -applog -product Vivado -messageDb vivado.pb -mode batch -source bram_32k_rom_m.tcl -notrace
+# Log file: F:/Projects/gb80/gb80.runs/impl_1/bram_32k_rom_m.vdi
+# Journal file: F:/Projects/gb80/gb80.runs/impl_1\vivado.jou
+#-----------------------------------------------------------
+source bram_32k_rom_m.tcl -notrace
