@@ -54,6 +54,8 @@ def parse_simdump(path):
                 else: 
                     print('Unkown address space encountered: ', namespace)
                     quit()
+                # 0xFFFF is not mapped to hram so make an exception
+                if buf == buf_hram and data[-1] == 'xx': data[-1] = '00'
                 buf += [int(x, 16) for x in data]
             vram = bytearray(buf_vram)
             eram = bytearray(buf_eram)

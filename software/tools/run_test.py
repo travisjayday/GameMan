@@ -116,7 +116,7 @@ if __name__ == "__main__":
     uts = []
     for prog in os.listdir(prog_dir):
         if not testall: 
-            if prog.startswith('prog_blinky'):
+            if prog.startswith('ut_cpu_mem_wr1'):
                 uts.append(prog_dir + prog)
         else:
             if prog.startswith('ut_cpu_flow'):

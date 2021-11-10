@@ -98,7 +98,9 @@ read_verilog -library xil_defaultlib -sv {
   F:/Projects/gb80/gb80.srcs/sources_1/new/cpu_defs.sv
   F:/Projects/gb80/gb80.srcs/sources_1/new/cpu.sv
   F:/Projects/gb80/gb80.srcs/sources_1/new/decoder.sv
+  F:/Projects/gb80/gb80.srcs/sources_1/new/mem_region.sv
   F:/Projects/gb80/gb80.srcs/sources_1/new/mmio_div.sv
+  F:/Projects/gb80/gb80.srcs/sources_1/new/mmio_dma.sv
   F:/Projects/gb80/gb80.srcs/sources_1/new/mmio_interrupts.sv
   F:/Projects/gb80/gb80.srcs/sources_1/new/ram_unit.sv
   F:/Projects/gb80/gb80.srcs/sources_1/new/top_level.sv
@@ -108,6 +110,9 @@ set_property used_in_implementation false [get_files -all f:/Projects/gb80/gb80.
 
 read_ip -quiet F:/Projects/gb80/gb80.srcs/sources_1/ip/bram_main_ram/bram_main_ram.xci
 set_property used_in_implementation false [get_files -all f:/Projects/gb80/gb80.gen/sources_1/ip/bram_main_ram/bram_main_ram_ooc.xdc]
+
+read_ip -quiet f:/Projects/gb80/gb80.srcs/sources_1/ip/bram_hram/bram_hram.xci
+set_property used_in_implementation false [get_files -all f:/Projects/gb80/gb80.gen/sources_1/ip/bram_hram/bram_hram_ooc.xdc]
 
 OPTRACE "Adding files" END { }
 # Mark all dcp files as not used in implementation to prevent them from being
@@ -121,6 +126,8 @@ foreach dcp [get_files -quiet -all -filter file_type=="Design\ Checkpoint"] {
 read_xdc F:/Projects/gb80/gb80.srcs/constrs_1/imports/new/lab_4.xdc
 set_property used_in_implementation false [get_files F:/Projects/gb80/gb80.srcs/constrs_1/imports/new/lab_4.xdc]
 
+read_xdc dont_touch.xdc
+set_property used_in_implementation false [get_files dont_touch.xdc]
 set_param ips.enableIPCacheLiteLoad 1
 close [open __synthesis_is_running__ w]
 

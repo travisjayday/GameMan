@@ -17,10 +17,19 @@ module top_level import cpu_defs::*;(
     mem_if rom_if(); 
     bram_32k_rom_m rom(clk_4mhz, rom_if);
 
-    // Contains: VRAM   EXT RAM     WRAM    OAM     HRAM
-    // Size:     8KB    8KB         4KB     160B    128B
+    // Contains: VRAM   EXT RAM     WRAM    OAM     
+    // Size:     8KB    8KB         4KB     160B    
     mem_if mram_if(); 
     bram_main_ram_m mram (clk_4mhz, mram_if);
+
+    // HRAM 
+    // Size: 127B
+    mem_if hram_if(); 
+    bram_hram_m hram (clk_4mhz, hram_if);
+
+    mem_if mmio_dma_if();
+    mem_if dma_req();
+    mmio_dma_m dma(clk_4mhz, rst, mmio_dma_if, dma_req);
 
     // Interrupt Handler Module 
     // Sets IF flag for CPU. Handles writes and reads to IF and IE cpu.regs. 
@@ -44,10 +53,12 @@ module top_level import cpu_defs::*;(
         .clk(clk_4mhz), 
         .rst(rst), 
         .req(mmu_if), 
+        .dma_req(dma_req),
         .rom_if(rom_if), 
         .mram_if(mram_if),
+        .hram_if(hram_if),
         .mmio_timer_if(mmio_timer_if),
-        .mmio_interrupts_if(mmio_interrupts_if)
+        .mmio_ints_if(mmio_interrupts_if)
     );
 
     // CPU 
@@ -128,9 +139,15 @@ module top_level import cpu_defs::*;(
             end
 
             $fwrite(fd, "%s:%04x  ", sections[section], addr);
-            for (int j = 0; j < cols_per_line; j++) 
-                $fwrite(fd, "%02x ", 
-                    mram.unit.inst.\native_mem_module.blk_mem_gen_v8_4_4_inst .memory[cols_per_line * i + j]);
+            for (int j = 0; j < cols_per_line; j++) begin
+                if (addr > 16'hFF00) begin
+                    $fwrite(fd, "%02x ", 
+                        hram.unit.inst.\native_mem_module.blk_mem_gen_v8_4_4_inst .memory[cols_per_line * (i-num_lines + 8) + j]);
+                end else begin
+                    $fwrite(fd, "%02x ", 
+                        mram.unit.inst.\native_mem_module.blk_mem_gen_v8_4_4_inst .memory[cols_per_line * i + j]);
+                end
+            end
             $fwrite(fd, "\n");
         end
 

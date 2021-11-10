@@ -19,45 +19,49 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
+module bram_32k_rom_m (
+    input wire clk, 
+    mem_if.slave in);
 
-module mem_m#(parameter MEM_SIZE=512)
-    (
-        input wire clk, 
-        input wire rst,
-        input wire [15:0] addr_select,       // address to interact with
-        input wire wr_select,               // 1 -> write to address; 0 -> read from address
-        output logic [7:0] rd_out,          // output (read value)
-        output logic rd_out_isvalid,
-        input wire [7:0] wr_value,          // input (value to write to addres)
-        input wire start 
-    );
+    bram_32k_rom unit(
+        .addra(in.addr_select),
+        .clka(clk), 
+        //.dina(in.write_value),
+        //.wea(in.write_enable),
+        .douta(in.read_out)
+        );
+endmodule
 
-    logic [7:0] ram [MEM_SIZE - 1 : 0];
-    logic [7:0] cycles_since_start; 
+module bram_hram_m (
+    input wire clk, 
+    mem_if.slave in);
 
-    always_ff @(posedge clk) begin
-        if (rst) begin
-            //ram <= '{default:'0};
-            rd_out_isvalid <= 0; 
-        end else begin
-            if (start) begin
-                cycles_since_start <= 0; 
-                rd_out_isvalid <= 0; 
-            end else if (cycles_since_start == 2) begin
-                if (!wr_select) begin
-                    if (addr_select >= MEM_SIZE) 
-                        $display("Memory read out of bound: 0x%x", addr_select);
-                    rd_out <= ram[addr_select];
-                    rd_out_isvalid <= 1; 
-                end else begin
-                    if (addr_select >= MEM_SIZE) 
-                        $display("Memory write out of bound: 0x%x <- 0x%x", addr_select, wr_value);
-                    ram[addr_select] <= wr_value;
-                    rd_out_isvalid <= 0; 
-                end
-            end else begin
-                cycles_since_start <= cycles_since_start + 1; 
-            end
-        end 
-    end
+    bram_hram unit(
+        .addra(in.addr_select[6:0]),
+        .clka(clk), 
+        .dina(in.write_value),
+        .wea(in.write_enable),
+        .douta(in.read_out)
+        );
+endmodule
+
+module bram_main_ram_m (
+    input wire clk, 
+    mem_if.slave in);
+
+    logic [7:0] outb;
+    bram_main_ram unit(
+        .clka(clk), 
+        .addra(in.addr_select[14:0]),
+        .dina(in.write_value),
+        .douta(in.read_out),
+        .wea(in.write_enable),
+
+        .clkb(clk),
+        .addrb(0),
+        .dinb(0),
+        .doutb(outb),
+        .web(0),
+        .enb(0)
+        );
 endmodule
