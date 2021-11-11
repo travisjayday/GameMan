@@ -6,16 +6,16 @@ module mmio_dma_m(
     );
 
     /* 0xFF46 - DMA (R/W) */
-    logic [7:0] dma_addr_hi;    // mapped to 0xFF46
-    logic [7:0] dma_addr_lo;    // internal to DMA engine
+    logic [7:0] dma_src_addr_hi;    // mapped to 0xFF46
+    logic [7:0] dma_src_addr_lo;    // internal to DMA engine
     logic [2:0] dma_we_hi; 
     logic [4:0] dma_request; 
     always_ff @(posedge clk) begin
         if (rst) begin
-            dma_addr_hi <= 0; 
+            dma_src_addr_hi <= 0; 
             dma_we_hi <= 0;
             dma_request <= 0; 
-            dma_addr_lo <= 0; 
+            dma_src_addr_lo <= 0; 
             dma_req.addr_select <= 16'hFFFF;
             dma_req.write_enable <= 0; 
             dma_req.write_value <= 0; 
@@ -23,7 +23,7 @@ module mmio_dma_m(
         else begin 
             // WE has been hi for 1 cycle.
             if (dma_we_hi == 1) begin
-                dma_addr_hi <= req.write_value;
+                dma_src_addr_hi <= req.write_value;
                 dma_request <= 6; 
             end
 
@@ -35,21 +35,56 @@ module mmio_dma_m(
         end
     end
 
+    typedef enum {
+        DMA_READ_1,
+        DMA_READ_2, 
+        DMA_WRITE_1, 
+        DMA_WRITE_2
+    } dma_state_t; 
+
+    dma_state_t dma_state;
+    logic [15:0] dma_dst_addr; 
+
     always_ff @(posedge clk) begin
         // Delay for two machine cycles
         if (dma_request > 0) begin
             dma_request <= dma_request - 1; 
-            if (dma_request == 1) dma_req.addr_select <= {dma_addr_hi, dma_addr_lo};
+            if (dma_request == 1) begin 
+                dma_req.addr_select <= {dma_src_addr_hi, dma_src_addr_lo};
+                dma_src_addr_lo <= dma_src_addr_lo + 1; 
+                dma_dst_addr <= 16'hFE00;
+                dma_state <= DMA_READ_2;
+            end
         end
         // DMA in progress
         if (dma_req.addr_select != 16'hFFFF) begin
-            if (dma_addr_lo < 8'h0A) begin
-                // After 160 bytes, dma is done
-                if (dma_addr_lo == 8'h0A - 1) dma_req.addr_select <= 16'hFFFF; 
-
-                // Dma is ongoing. Copy data.
-            
-            end 
+            // Dma is ongoing. Copy data.
+            case (dma_state) 
+                DMA_READ_1: begin
+                    if (dma_dst_addr == 8'h0A - 1) begin 
+                        // After 160 bytes, dma is done
+                        dma_req.addr_select <= 16'hFFFF; 
+                    end else begin
+                        // Else read next byte
+                        dma_src_addr_lo <= dma_src_addr_lo + 1; 
+                        dma_req.addr_select <= {dma_src_addr_hi, dma_src_addr_lo};
+                        dma_req.write_enable <= 0; 
+                    end
+                end
+                DMA_READ_2: begin
+                    // Reading... 
+                end
+                DMA_WRITE_1: begin
+                    // Write incoming byte to OAM...
+                    dma_req.addr_select <= dma_dst_addr;
+                    dma_dst_addr <= dma_dst_addr + 1; 
+                    dma_req.write_enable <= 1; 
+                    dma_req.write_value <= dma_req.read_out;
+                end
+                DMA_WRITE_2: begin
+                    // Writing...
+                end
+            endcase 
         end
     end
 endmodule

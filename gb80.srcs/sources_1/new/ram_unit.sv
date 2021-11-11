@@ -103,7 +103,7 @@ module mmu_m(
         (`DMA_ADDR_IN_RNG(16'hFE00, 16'hFEA0))      `DMA_EN_INTERFACE(`EN_MRAM_IF, -16'hFE00 + 16'hE000)
 
         /* CPU ACCESS */
-        if      /* ROM (0x0000 - 0x7FFF) */
+        if /* ROM (0x0000 - 0x7FFF) */
         (`ADDR_IN_RNG(16'h0000, 16'h8000))          `EN_INTERFACE(`EN_ROM_IF, 0)
         if /* VRAM, EXTRAM, WRAM (0x8000 - 0xDFFF) */
         (`ADDR_IN_RNG(16'h8000, 16'hE000))          `EN_INTERFACE(`EN_MRAM_IF, -16'h8000)
