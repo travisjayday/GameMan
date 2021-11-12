@@ -5,13 +5,14 @@ import time
 import pyautogui
 import sim_prog_selector as sim_selector
 from gb_state import GameBoyState
-
+ahmad_vivado_bin = 'C:\\Xlinx\\Vivado\\2019.2\\bin\\'
 vivado_bin = 'F:\\tools\\WinXilinix\\Vivado\\2021.1\\bin\\'
+vivado_bin = ahmad_vivado_bin
 xsim_exe = vivado_bin + 'xsim' 
 root = str(Path(__file__).parent.parent.parent.absolute())
 emu_dir = root + '{0}software{0}emu{0}'.format(os.sep)
 prog_dir = root + '{0}software{0}progs{0}'.format(os.sep)
-xsim_dir = root + '{0}gb80.sim{0}sim_1{0}behav{0}xsim{0}'.format(os.sep)
+xsim_dir = root + '{0}GameMan{0}GameMan.sim{0}sim_1{0}behav{0}xsim{0}'.format(os.sep)
 emu_exe = emu_dir + 'bgb64.exe'
 emu_cfg = emu_dir + 'bgb.ini'
 

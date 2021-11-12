@@ -230,8 +230,9 @@ class GameBoyState():
 
 if __name__ == "__main__": 
     gb1 = GameBoyState()
-    gb1.load_from_sna('F:\\Projects\\gb80\\software\\emu\\tetris.sna')
-    gb2 = GameBoyState()
-    gb2.load_from_simdump('F:\\Projects\\gb80\\gb80.sim\\sim_1\\behav\\xsim\\simdump.hex')
+    gb1.load_from_sna('C:\\Users\\Ahmad\\Desktop\\Ape_Gang_FPGA_Project\\software\\tools\\tetris.sna')
+    print(gb1.stringify_mem('oam'))
+    #gb2 = GameBoyState()
+    #gb2.load_from_simdump('F:\\Projects\\gb80\\gb80.sim\\sim_1\\behav\\xsim\\simdump.hex')
 
-    gb2.compare(gb1)
+    #gb2.compare(gb1)

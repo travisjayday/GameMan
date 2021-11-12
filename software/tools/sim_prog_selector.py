@@ -6,8 +6,8 @@ root = str(Path(__file__).parent.parent.parent.absolute())
 print('root is ', root)
 prog_path = root + '{0}software{0}progs'.format(os.sep)
 sim_mem_path = root + '{0}program.coe'.format(os.sep)
-sim_32k_rom_path1 = root + '{0}gb80.gen{0}sources_1{0}ip{0}bram_32k_rom{0}bram_32k_rom.mif'.format(os.sep)
-sim_32k_rom_path2 = root + '{0}gb80.sim{0}sim_1{0}behav{0}xsim{0}bram_32k_rom.mif'.format(os.sep)
+sim_32k_rom_path1 = root + '{0}GameMan{0}GameMan.srcs{0}sources_1{0}ip{0}bram_32k_rom{0}bram_32k_rom.mif'.format(os.sep)
+sim_32k_rom_path2 = root + '{0}GameMan{0}GameMan.sim{0}sim_1{0}behav{0}xsim{0}bram_32k_rom.mif'.format(os.sep)
 
 def make_coe(path): 
     prog_data = open(path, 'rb')
