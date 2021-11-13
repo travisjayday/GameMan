@@ -5,16 +5,23 @@ import time
 import pyautogui
 import sim_prog_selector as sim_selector
 from gb_state import GameBoyState
-ahmad_vivado_bin = 'C:\\Xlinx\\Vivado\\2019.2\\bin\\'
-vivado_bin = 'F:\\tools\\WinXilinix\\Vivado\\2021.1\\bin\\'
-vivado_bin = ahmad_vivado_bin
-xsim_exe = vivado_bin + 'xsim' 
-root = str(Path(__file__).parent.parent.parent.absolute())
-emu_dir = root + '{0}software{0}emu{0}'.format(os.sep)
-prog_dir = root + '{0}software{0}progs{0}'.format(os.sep)
-xsim_dir = root + '{0}GameMan{0}GameMan.sim{0}sim_1{0}behav{0}xsim{0}'.format(os.sep)
+
+root = str(Path(__file__).parent.parent.parent.absolute()) + os.sep
+emu_dir = root + 'software{0}emu{0}'.format(os.sep)
+prog_dir = root + 'software{0}progs{0}'.format(os.sep)
+xsim_dir = root + 'GameMan{0}GameMan.sim{0}sim_1{0}behav{0}xsim{0}'.format(os.sep)
 emu_exe = emu_dir + 'bgb64.exe'
 emu_cfg = emu_dir + 'bgb.ini'
+
+ini = {}
+with open(root + 'locals.ini', 'r') as f:
+    for line in f.read().split('\n'): 
+        if line[0] == '#': continue
+        var, val = line.split('=')
+        ini[var] = val
+
+vivado_bin = ini['travis_vivado_bin'] if ini['user'] == 'travis' else ini['ahmad_vivado_bin']
+xsim_exe = vivado_bin + os.sep + 'xsim' 
 
 def set_bootrom_path(path):
     with open(emu_cfg, 'r') as f:
@@ -54,30 +61,39 @@ def run_emu_as_bootrom(prog_file, debug=False):
         f.write(b)
 
     set_bootrom_path(prog_file)
-    p = subprocess.Popen([emu_exe, emu_dir + 'empty.gb'], stdin=subprocess.PIPE)
+
     if debug: 
-        input('Press enter to continue...')
-        quit()
+        p = subprocess.Popen([emu_exe, emu_dir + 'empty.gb'], stdin=subprocess.PIPE)
+        if debug: 
+            input('Press enter to continue...')
+            quit()
 
-    # Wait for emu to start
-    time.sleep(1)
+        # Wait for emu to start
+        time.sleep(1)
 
-    # Press enter on dialog that rom is broken
-    pyautogui.press('enter')
-    time.sleep(0.25)
+        # Press enter on dialog that rom is broken
+        pyautogui.press('enter')
+        time.sleep(0.25)
 
-    # Run emu code
-    pyautogui.press('f9')
-    time.sleep(1)
+        # Run emu code
+        pyautogui.press('f9')
+        time.sleep(1)
 
-    # Save emu code as run.sna
-    pyautogui.hotkey('ctrl', 'w')
-    time.sleep(0.25)
-    pyautogui.typewrite('run.sna\n')
-    time.sleep(0.5)
+        # Save emu code as run.sna
+        pyautogui.hotkey('ctrl', 'w')
+        time.sleep(0.25)
+        pyautogui.typewrite('run.sna\n')
+        time.sleep(0.5)
+    else: 
+        cmd = emu_exe + ' -headless -rom ' + emu_dir + 'empty.gb -stateonexit ' + emu_dir + 'run.sna'
+        print(cmd)
+        p = os.system(cmd)
+        
     gb = GameBoyState()
     gb.load_from_sna(emu_dir + 'run.sna')
-    p.terminate()
+
+    if type(p) != int:
+        p.terminate()
     return gb
 
 def run_xsim_program(prog_file): 
@@ -86,7 +102,8 @@ def run_xsim_program(prog_file):
     # Select program for XSIM
     sim_selector.select_prog(prog_file)
 
-    args = 'cpu_tb1_behav -key {Behavioral:sim_1:Functional:cpu_tb1} -tclbatch {cpu_tb1.tcl} -log run.log'
+    #args = 'cpu_tb1_behav -key {Behavioral:sim_1:Functional:cpu_tb1} -tclbatch {cpu_tb1.tcl} -log run.log'
+    args = 'cpu_tb1_behav -key {Behavioral:sim_1:Functional:cpu_tb1} -runall -log run.log'
     cmd = [xsim_exe] + args.split()
     cmd = ' '.join(cmd)
     os.chdir(xsim_dir)
@@ -100,6 +117,13 @@ def run_xsim_program(prog_file):
         output.append(line)
         if 'xsim: Time' in line or "$finish called" in line: 
             break
+        if 'fatal error' in line.lower(): 
+            print('Looks like XSIM died... Trying to recover...')
+            p.terminate()
+            run_xsim_program(prog_file)
+            return
+
+
     print('Stopping xsim...')
     p.stdin.write(bytes('exit\n', 'utf8'))
 
@@ -117,10 +141,10 @@ if __name__ == "__main__":
     uts = []
     for prog in os.listdir(prog_dir):
         if not testall: 
-            if prog.startswith('ut_cpu_mem_wr1'):
+            if prog.startswith('ut_mmio_dma_3'):
                 uts.append(prog_dir + prog)
         else:
-            if prog.startswith('ut_cpu_flow'):
+            if prog.startswith('ut_'):
                 uts.append(prog_dir + prog)
 
     passed = []
@@ -128,7 +152,7 @@ if __name__ == "__main__":
     for test_dir in uts: 
         prog_file = test_dir + os.sep + 'out.gb' 
         assemble_program(prog_file)
-        gb_emu = run_emu_as_bootrom(prog_file, debug=False)
+        gb_emu = run_emu_as_bootrom(prog_file, debug=True)
         gb_uut = run_xsim_program(prog_file)
 
         if gb_uut.compare(gb_emu): 

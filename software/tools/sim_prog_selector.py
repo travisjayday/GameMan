@@ -8,6 +8,8 @@ prog_path = root + '{0}software{0}progs'.format(os.sep)
 sim_mem_path = root + '{0}program.coe'.format(os.sep)
 sim_32k_rom_path1 = root + '{0}GameMan{0}GameMan.srcs{0}sources_1{0}ip{0}bram_32k_rom{0}bram_32k_rom.mif'.format(os.sep)
 sim_32k_rom_path2 = root + '{0}GameMan{0}GameMan.sim{0}sim_1{0}behav{0}xsim{0}bram_32k_rom.mif'.format(os.sep)
+sim_32k_rom_path3 = root + '{0}GameMan{0}GameMan.ip_user_files{0}sim_scripts{0}bram_32k_rom{0}xsim{0}bram_32k_rom.mif'.format(os.sep)
+sim_32k_rom_path4 = root + '{0}GameMan{0}GameMan.gen{0}sources_1{0}ip{0}bram_32k_rom{0}bram_32k_rom.mif'.format(os.sep)
 
 def make_coe(path): 
     prog_data = open(path, 'rb')
@@ -55,6 +57,8 @@ def select_prog(prog_file):
     prog_mif = make_mif(prog_file)
     write_to_file(sim_32k_rom_path1, prog_mif)
     write_to_file(sim_32k_rom_path2, prog_mif)
+    write_to_file(sim_32k_rom_path3, prog_mif)
+    write_to_file(sim_32k_rom_path4, prog_mif)
     write_to_file(sim_mem_path, prog_coe)
 
 if __name__ == "__main__": 
@@ -77,5 +81,6 @@ if __name__ == "__main__":
             prog_file += os.sep + file
             break
 
+    print('Using program: ' + prog_file)
     select_prog(prog_file)
     input('...')

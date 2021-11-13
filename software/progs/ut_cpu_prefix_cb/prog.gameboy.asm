@@ -48,4 +48,5 @@ SECTION "Header", ROM0[$00]
 	push af
 	res 5, h
 
-	db $fd
+	ld b, b
+	nop

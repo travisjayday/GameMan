@@ -1,0 +1,23 @@
+# compile verilog/system verilog design source files
+verilog xil_defaultlib  \
+"../../../../GameMan.gen/sources_1/ip/bram_hram/sim/bram_hram.v" \
+"../../../../GameMan.gen/sources_1/ip/bram_main_ram/sim/bram_main_ram.v" \
+"../../../../GameMan.gen/sources_1/ip/bram_32k_rom/sim/bram_32k_rom.v" \
+
+sv xil_defaultlib  \
+"../../../../GameMan.srcs/sources_1/imports/hdl/cpu_defs.sv" \
+"../../../../GameMan.srcs/sources_1/imports/hdl/cpu.sv" \
+"../../../../GameMan.srcs/sources_1/imports/hdl/decoder.sv" \
+"../../../../GameMan.srcs/sources_1/imports/hdl/mem_region.sv" \
+"../../../../GameMan.srcs/sources_1/imports/hdl/mmio_div.sv" \
+"../../../../GameMan.srcs/sources_1/imports/hdl/mmio_dma.sv" \
+"../../../../GameMan.srcs/sources_1/imports/hdl/mmio_interrupts.sv" \
+"../../../../GameMan.srcs/sources_1/imports/hdl/ram_unit.sv" \
+"../../../../GameMan.srcs/sources_1/imports/hdl/top_level.sv" \
+"../../../../GameMan.srcs/sim_1/imports/sim/cpu_tb1.sv" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

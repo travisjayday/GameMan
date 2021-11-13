@@ -8,7 +8,6 @@ SECTION "Header", ROM0[$00]
 	ld b, $0F		; 2 div->1
 	ld b, $0d		; 2 div->2
 	ldh [$4], a
-	ldh [$4], a
 	ld a, $ff
 	ldh [$7], a
 	ldh [$6], a

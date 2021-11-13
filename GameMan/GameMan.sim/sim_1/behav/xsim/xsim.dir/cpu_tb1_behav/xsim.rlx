@@ -1,0 +1,12 @@
+
+{ 
+    crc :  6732515421907449653  , 
+    ccp_crc :  0  , 
+    cmdline : " -wto 5e9c2cb658d04cdf9013060b32e208ec --incr --debug typical --relax --mt 2 -L xil_defaultlib -L blk_mem_gen_v8_4_4 -L uvm -L unisims_ver -L unimacro_ver -L secureip -L xpm --snapshot cpu_tb1_behav xil_defaultlib.cpu_tb1 xil_defaultlib.glbl" , 
+    buildDate : "Jun 10 2021" , 
+    buildTime : "20:04:57" , 
+    linkCmd : "F:\\tools\\WinXilinix\\Vivado\\2021.1\\data\\..\\tps\\mingw\\6.2.0\\win64.o\\nt\\bin\\gcc.exe -Wa,-W  -O -Wl,--stack,104857600 -o \"xsim.dir/cpu_tb1_behav/xsimk.exe\"   \"xsim.dir/cpu_tb1_behav/obj/xsim_0.win64.obj\" \"xsim.dir/cpu_tb1_behav/obj/xsim_1.win64.obj\" \"xsim.dir/cpu_tb1_behav/obj/xsim_2.win64.obj\" \"xsim.dir/cpu_tb1_behav/obj/xsim_3.win64.obj\" -L\"F:\\tools\\WinXilinix\\Vivado\\2021.1\\lib\\win64.o\" -lrdi_simulator_kernel   -lrdi_simbridge_kernel" , 
+    aggregate_nets : 
+    [ 
+    ] 
+} 

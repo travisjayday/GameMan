@@ -1,0 +1,2 @@
+bram_32k_rom.v,verilog,xil_defaultlib,../../../../GameMan.gen/sources_1/ip/bram_32k_rom/sim/bram_32k_rom.v,
+glbl.v,Verilog,xil_defaultlib,glbl.v
