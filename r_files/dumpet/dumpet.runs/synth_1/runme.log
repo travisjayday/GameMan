@@ -1,0 +1,541 @@
+
+*** Running vivado
+    with args -log cart_interface.vds -m64 -product Vivado -mode batch -messageDb vivado.pb -notrace -source cart_interface.tcl
+
+
+****** Vivado v2019.2 (64-bit)
+  **** SW Build 2708876 on Wed Nov  6 21:39:14 MST 2019
+  **** IP Build 2700528 on Thu Nov  7 00:09:20 MST 2019
+    ** Copyright 1986-2019 Xilinx, Inc. All Rights Reserved.
+
+source cart_interface.tcl -notrace
+Command: synth_design -top cart_interface -part xc7a100tcsg324-1
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7a100t'
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: Launching helper process for spawning children vivado processes
+INFO: Helper process launched with PID 151039 
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:06 . Memory (MB): peak = 1825.105 ; gain = 200.719 ; free physical = 2336 ; free virtual = 6411
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'cart_interface' [/media/sf_6.111/dumpet/dumpet.srcs/sources_1/new/top_level.sv:5]
+INFO: [Synth 8-6157] synthesizing module 'mem_if' [/home/u/project_files/GameMan/gb80.srcs/sources_1/new/cpu_defs.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'mem_if' (0#1) [/home/u/project_files/GameMan/gb80.srcs/sources_1/new/cpu_defs.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'clk_divider' [/media/sf_6.111/dumpet/dumpet.srcs/sources_1/new/cart_if.sv:33]
+	Parameter DIVIDER bound to: 4 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'clk_divider' (1#1) [/media/sf_6.111/dumpet/dumpet.srcs/sources_1/new/cart_if.sv:33]
+WARNING: [Synth 8-3848] Net rom_if\.read_out in module/entity cart_interface does not have driver. [/media/sf_6.111/dumpet/dumpet.srcs/sources_1/new/top_level.sv:8]
+INFO: [Synth 8-6155] done synthesizing module 'cart_interface' (2#1) [/media/sf_6.111/dumpet/dumpet.srcs/sources_1/new/top_level.sv:5]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[7]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[6]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[5]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[4]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[3]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[2]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[1]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[0]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[7]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[6]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[5]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[4]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[3]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[2]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[1]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[0]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[7]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[6]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[5]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[4]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[3]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[2]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[1]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[0]
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:05 ; elapsed = 00:00:08 . Memory (MB): peak = 1886.855 ; gain = 262.469 ; free physical = 2369 ; free virtual = 6444
+---------------------------------------------------------------------------------
+
+Report Check Netlist: 
++------+------------------+-------+---------+-------+------------------+
+|      |Item              |Errors |Warnings |Status |Description       |
++------+------------------+-------+---------+-------+------------------+
+|1     |multi_driven_nets |      0|        0|Passed |Multi driven nets |
++------+------------------+-------+---------+-------+------------------+
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:06 ; elapsed = 00:00:08 . Memory (MB): peak = 1886.855 ; gain = 262.469 ; free physical = 2366 ; free virtual = 6441
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:06 ; elapsed = 00:00:08 . Memory (MB): peak = 1886.855 ; gain = 262.469 ; free physical = 2366 ; free virtual = 6441
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 1886.855 ; gain = 0.000 ; free physical = 2359 ; free virtual = 6434
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc]
+WARNING: [Vivado 12-584] No ports matched 'clk_100mhz'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:12]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:12]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'clk_100mhz'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:13]
+CRITICAL WARNING: [Vivado 12-4739] create_clock:No valid object(s) found for '-objects [get_ports clk_100mhz]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:13]
+Resolution: Check if the specified object(s) exists in the current design. If it does, ensure that the correct design hierarchy was specified for the object. If you are working with clocks, make sure create_clock was used to create the clock object before it is referenced.
+WARNING: [Vivado 12-584] No ports matched 'sw[0]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:18]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:18]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[1]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:19]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:19]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[2]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:20]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:20]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[3]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:21]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:21]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[4]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:22]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:22]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[5]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:23]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:23]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[6]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:24]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:24]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[7]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:25]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:25]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[8]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:26]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:26]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[9]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:27]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:27]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[10]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:28]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:28]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[11]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:29]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:29]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[12]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:30]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:30]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[13]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:31]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:31]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[14]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:32]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:32]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'sw[15]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:33]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:33]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[0]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:38]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:38]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[1]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:39]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:39]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[2]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:40]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:40]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[3]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:41]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:41]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[4]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:42]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:42]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[5]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:43]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:43]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[6]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:44]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:44]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[7]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:45]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:45]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[8]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:46]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:46]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[9]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:47]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:47]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[10]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:48]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:48]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[11]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:49]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:49]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[12]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:50]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:50]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[13]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:51]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:51]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[14]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:52]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:52]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'led[15]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:53]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:53]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'btnc'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:89]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:89]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'ja[0]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:101]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:101]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'ja[1]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:102]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:102]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'ja[2]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:103]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:103]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'ja[3]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:104]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:104]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'ja[4]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:105]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:105]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'ja[5]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:106]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:106]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'ja[6]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:107]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:107]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'ja[7]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:108]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:108]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jb[0]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:113]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:113]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jb[1]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:114]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:114]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jb[2]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:115]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:115]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jb[3]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:116]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:116]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jb[4]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:117]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:117]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jb[5]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:118]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:118]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jb[6]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:119]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:119]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jb[7]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:120]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:120]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jc[0]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:125]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:125]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jc[1]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:126]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:126]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jc[2]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:127]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:127]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jc[3]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:128]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:128]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jc[4]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:129]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:129]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jc[5]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:130]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:130]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jc[6]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:131]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:131]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jc[7]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:132]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:132]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jd[0]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:137]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:137]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jd[1]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:138]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:138]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jd[2]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:139]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:139]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jd[3]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:140]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:140]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jd[4]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:141]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:141]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jd[5]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:142]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:142]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jd[6]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:143]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:143]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'jd[7]'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:144]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:144]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'uart_txd_in'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:241]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:241]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+WARNING: [Vivado 12-584] No ports matched 'uart_rxd_out'. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:242]
+CRITICAL WARNING: [Common 17-55] 'set_property' expects at least one object. [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc:242]
+Resolution: If [get_<value>] was used to populate the object, check to make sure this command returns at least one valid object.
+Finished Parsing XDC File [/media/sf_6.111/dumpet/dumpet.srcs/constrs_1/imports/lab5/nexys4ddr_audio.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 1976.590 ; gain = 0.000 ; free physical = 2283 ; free virtual = 6358
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 1976.590 ; gain = 0.000 ; free physical = 2283 ; free virtual = 6358
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:12 ; elapsed = 00:00:16 . Memory (MB): peak = 1976.590 ; gain = 352.203 ; free physical = 2340 ; free virtual = 6415
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7a100tcsg324-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:12 ; elapsed = 00:00:16 . Memory (MB): peak = 1976.590 ; gain = 352.203 ; free physical = 2340 ; free virtual = 6415
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:12 ; elapsed = 00:00:16 . Memory (MB): peak = 1976.590 ; gain = 352.203 ; free physical = 2343 ; free virtual = 6417
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:12 ; elapsed = 00:00:17 . Memory (MB): peak = 1976.590 ; gain = 352.203 ; free physical = 2334 ; free virtual = 6409
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input      2 Bit       Adders := 1     
++---Registers : 
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 1     
++---Muxes : 
+	   2 Input      1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Hierarchical Component Statistics 
+---------------------------------------------------------------------------------
+Hierarchical RTL Component report 
+Module clk_divider 
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input      2 Bit       Adders := 1     
++---Registers : 
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 1     
++---Muxes : 
+	   2 Input      1 Bit        Muxes := 1     
+---------------------------------------------------------------------------------
+Finished RTL Hierarchical Component Statistics
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 240 (col length:80)
+BRAMs: 270 (col length: RAMB18 80 RAMB36 40)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+Warning: Parallel synthesis criteria is not met 
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[7]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[6]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[5]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[4]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[3]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[2]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[1]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.read_out[0]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[7]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[6]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[5]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[4]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[3]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[2]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[1]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port data_out[0]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[7]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[6]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[5]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[4]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[3]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[2]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[1]
+WARNING: [Synth 8-3331] design cart_interface has unconnected port rom_if\.write_value[0]
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:13 ; elapsed = 00:00:17 . Memory (MB): peak = 1976.590 ; gain = 352.203 ; free physical = 2324 ; free virtual = 6399
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:00:19 ; elapsed = 00:00:26 . Memory (MB): peak = 1976.590 ; gain = 352.203 ; free physical = 2203 ; free virtual = 6278
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:19 ; elapsed = 00:00:26 . Memory (MB): peak = 1976.590 ; gain = 352.203 ; free physical = 2203 ; free virtual = 6278
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:19 ; elapsed = 00:00:26 . Memory (MB): peak = 1984.598 ; gain = 360.211 ; free physical = 2202 ; free virtual = 6277
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:23 ; elapsed = 00:00:30 . Memory (MB): peak = 1995.504 ; gain = 371.117 ; free physical = 2201 ; free virtual = 6276
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:23 ; elapsed = 00:00:30 . Memory (MB): peak = 1995.504 ; gain = 371.117 ; free physical = 2201 ; free virtual = 6276
+---------------------------------------------------------------------------------
+
+Report RTL Partitions: 
++-+--------------+------------+----------+
+| |RTL Partition |Replication |Instances |
++-+--------------+------------+----------+
++-+--------------+------------+----------+
+
+Report Check Netlist: 
++------+------------------+-------+---------+-------+------------------+
+|      |Item              |Errors |Warnings |Status |Description       |
++------+------------------+-------+---------+-------+------------------+
+|1     |multi_driven_nets |      0|        0|Passed |Multi driven nets |
++------+------------------+-------+---------+-------+------------------+
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:23 ; elapsed = 00:00:30 . Memory (MB): peak = 1995.504 ; gain = 371.117 ; free physical = 2201 ; free virtual = 6276
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:23 ; elapsed = 00:00:30 . Memory (MB): peak = 1995.504 ; gain = 371.117 ; free physical = 2201 ; free virtual = 6276
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:23 ; elapsed = 00:00:30 . Memory (MB): peak = 1995.504 ; gain = 371.117 ; free physical = 2201 ; free virtual = 6276
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:23 ; elapsed = 00:00:30 . Memory (MB): peak = 1995.504 ; gain = 371.117 ; free physical = 2201 ; free virtual = 6276
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+------+------+
+|      |Cell  |Count |
++------+------+------+
+|1     |BUFG  |     1|
+|2     |LUT1  |     2|
+|3     |LUT2  |     1|
+|4     |LUT3  |     2|
+|5     |LUT4  |     1|
+|6     |FDRE  |     3|
+|7     |IBUF  |    19|
+|8     |OBUF  |    21|
+|9     |OBUFT |     8|
++------+------+------+
+
+Report Instance Areas: 
++------+-------------+------------+------+
+|      |Instance     |Module      |Cells |
++------+-------------+------------+------+
+|1     |top          |            |    58|
+|2     |  cart_clock |clk_divider |     6|
++------+-------------+------------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:23 ; elapsed = 00:00:30 . Memory (MB): peak = 1995.504 ; gain = 371.117 ; free physical = 2201 ; free virtual = 6276
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 24 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:21 ; elapsed = 00:00:28 . Memory (MB): peak = 1995.504 ; gain = 281.383 ; free physical = 2257 ; free virtual = 6332
+Synthesis Optimization Complete : Time (s): cpu = 00:00:23 ; elapsed = 00:00:30 . Memory (MB): peak = 1995.512 ; gain = 371.117 ; free physical = 2257 ; free virtual = 6332
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 1995.512 ; gain = 0.000 ; free physical = 2325 ; free virtual = 6400
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2002.441 ; gain = 0.000 ; free physical = 2270 ; free virtual = 6345
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+INFO: [Common 17-83] Releasing license: Synthesis
+15 Infos, 118 Warnings, 69 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:31 ; elapsed = 00:00:40 . Memory (MB): peak = 2002.441 ; gain = 558.312 ; free physical = 2404 ; free virtual = 6479
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2002.441 ; gain = 0.000 ; free physical = 2404 ; free virtual = 6479
+WARNING: [Constraints 18-5210] No constraints selected for write.
+Resolution: This message can indicate that there are no constraints for the design, or it can indicate that the used_in flags are set such that the constraints are ignored. This later case is used when running synth_design to not write synthesis constraints to the resulting checkpoint. Instead, project constraints are read when the synthesized design is opened.
+INFO: [Common 17-1381] The checkpoint '/media/sf_6.111/dumpet/dumpet.runs/synth_1/cart_interface.dcp' has been generated.
+INFO: [runtcl-4] Executing : report_utilization -file cart_interface_utilization_synth.rpt -pb cart_interface_utilization_synth.pb
+INFO: [Common 17-206] Exiting Vivado at Sun Nov 14 00:20:46 2021...
