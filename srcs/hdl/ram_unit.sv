@@ -95,18 +95,27 @@ module mmu_m(
         /* DMA ACCESS */
         if      /* ROM (0x0000 - 0x7FFF) */
         (`DMA_ADDR_IN_RNG(16'h0000, 16'h8000))      `DMA_EN_INTERFACE(`EN_ROM_IF, 0)
-        if /* VRAM, EXTRAM, WRAM (0x8000 - 0xDFFF) */
-        (`DMA_ADDR_IN_RNG(16'h8000, 16'hE000))      `DMA_EN_INTERFACE(`EN_MRAM_IF, -16'h8000)
+        if      /* VRAM (0x8000 - 0x9FFF) */
+        (`DMA_ADDR_IN_RNG(16'h8000, 16'hA000))      `DMA_EN_INTERFACE(`EN_MRAM_IF, -16'h8000)
+        if      /* EXTRAM (0xA000 - 0xBFFF) */
+        (`DMA_ADDR_IN_RNG(16'hA000, 16'hC000))      `DMA_EN_INTERFACE(`EN_ROM_IF, 0)
+        if     /* WRAM (0xC000 - 0xDFFF) */
+        (`DMA_ADDR_IN_RNG(16'hC000, 16'hE000))      `DMA_EN_INTERFACE(`EN_MRAM_IF, -16'h8000)
         if /* ECHO RAM (0xE000 - 0xFDFF) */
         (`DMA_ADDR_IN_RNG(16'hE000, 16'hFE00))      `DMA_EN_INTERFACE(`EN_MRAM_IF, -16'hE000 + 16'h4000)
         if /* OAM RAM (0xFE00 - 0xFE9F) */
         (`DMA_ADDR_IN_RNG(16'hFE00, 16'hFEA0))      `DMA_EN_INTERFACE(`EN_MRAM_IF, -16'hFE00 + 16'hE000)
-
+        
+        
         /* CPU ACCESS */
         if /* ROM (0x0000 - 0x7FFF) */
         (`ADDR_IN_RNG(16'h0000, 16'h8000))          `EN_INTERFACE(`EN_ROM_IF, 0)
-        if /* VRAM, EXTRAM, WRAM (0x8000 - 0xDFFF) */
-        (`ADDR_IN_RNG(16'h8000, 16'hE000))          `EN_INTERFACE(`EN_MRAM_IF, -16'h8000)
+        if /* VRAM (0x8000 - 0x9FFF) */
+        (`ADDR_IN_RNG(16'h8000, 16'hA000))          `EN_INTERFACE(`EN_MRAM_IF, -16'h8000)
+        if /* EXTRAM (0xA000 - 0xBFFF) */
+        (`ADDR_IN_RNG(16'hA000, 16'hC000))          `EN_INTERFACE(`EN_ROM_IF, 0)
+        if /*  WRAM (0xC000 - 0xDFFF) */
+        (`ADDR_IN_RNG(16'hC000, 16'hE000))          `EN_INTERFACE(`EN_MRAM_IF, -16'h8000)
         if /* ECHO RAM (0xE000 - 0xFDFF) */
         (`ADDR_IN_RNG(16'hE000, 16'hFE00))          `EN_INTERFACE(`EN_MRAM_IF, -16'hE000 + 16'h4000)
         if /* OAM RAM (0xFE00 - 0xFE9F) */
