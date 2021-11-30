@@ -141,7 +141,7 @@ if __name__ == "__main__":
     uts = []
     for prog in os.listdir(prog_dir):
         if not testall: 
-            if prog.startswith('ut_cpu_mem'):
+            if prog.startswith('ut_mmio_dma_4'):
                 uts.append(prog_dir + prog)
         else:
             if prog.startswith('ut_'):
