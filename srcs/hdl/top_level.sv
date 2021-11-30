@@ -17,19 +17,22 @@ module top_level import cpu_defs::*;(
     mem_if rom_if(); 
     bram_32k_rom_m rom(clk_4mhz, rom_if);
 
-    // Contains: VRAM   EXT RAM     WRAM    OAM     
-    // Size:     8KB    8KB         4KB     160B    
-    mem_if mram_if(); 
-    bram_main_ram_m mram (clk_4mhz, mram_if);
+    // WRAM: Size 8KB
+    mem_if wram_if(); 
+    bram_main_ram_m wram (clk_4mhz, wram_if);
 
-    // HRAM 
-    // Size: 127B
+    // VRAM: Size: 8KB
+    mem_if vram_if(); 
+    bram_vram_m vram (clk_4mhz, vram_if);
+
+    // OAM: Size: 160B
+    mem_if oam_if(); 
+    bram_oam_m oam (clk_4mhz, oam_if);
+
+    // HRAM: Size: 127B
     mem_if hram_if(); 
     bram_hram_m hram (clk_4mhz, hram_if);
 
-    mem_if mmio_dma_if();
-    mem_if dma_req();
-    mmio_dma_m dma(clk_4mhz, rst, mmio_dma_if, dma_req);
 
     // Interrupt Handler Module 
     // Sets IF flag for CPU. Handles writes and reads to IF and IE cpu.regs. 
@@ -47,26 +50,36 @@ module top_level import cpu_defs::*;(
     mem_if mmio_timer_if();
     mmio_timer_m mmio_timer(clk_4mhz, rst, mmio_timer_if, interrupts.timer);
 
+
+    // DMA
+    mem_if dma_mmu_if();    // Busmaster 1
+    mem_if mmio_dma_if();
+    mmio_dma_m dma(clk_4mhz, rst, mmio_dma_if, dma_mmu_if);
+
     // Memory Mapping Unit
-    mem_if mmu_if(); 
+    mem_if cpu_mmu_if();    // Busmaster 0
     mmu_m mmu(
         .clk(clk_4mhz), 
         .rst(rst), 
-        .req(mmu_if), 
-        .dma_req(dma_req),
+        .cpu_req(cpu_mmu_if), 
+        .dma_req(dma_mmu_if),
         .rom_if(rom_if), 
-        .mram_if(mram_if),
+        .vram_if(vram_if),
+        .oam_if(oam_if),
+        .wram_if(wram_if),
         .hram_if(hram_if),
         .mmio_timer_if(mmio_timer_if),
-        .mmio_ints_if(mmio_interrupts_if)
+        .mmio_ints_if(mmio_interrupts_if),
+        .mmio_dma_if(mmio_dma_if)
     );
+
 
     // CPU 
     logic cpu_died;
     cpu_m cpu(
         .clk(clk_4mhz), 
         .rst(rst), 
-        .mmu(mmu_if), 
+        .mmu(cpu_mmu_if), 
         .mmio_reg_IF(mmio_interrupts.IF),
         .mmio_reg_IE(mmio_interrupts.IE), 
         .cpu_died(cpu_died), 
@@ -91,6 +104,17 @@ module top_level import cpu_defs::*;(
         else if (cpu_died) zombie_cnt <= zombie_cnt + 1; 
     end
 
+    `define PRINT_MEM(NAME, MEMUNIT, SIZE)                                                                             \
+        num_bytes = SIZE;                                                                                              \
+        num_lines = num_bytes / cols_per_line;                                                                         \
+        for (int i = 0; i < num_lines; i++) begin                                                                      \
+            $fwrite(fd, "%s:%04x  ", NAME, i * cols_per_line);                                                         \
+            for (int j = 0; j < cols_per_line; j++)                                                                    \
+                $fwrite(fd, "%02x ",                                                                                   \
+                    MEMUNIT.unit.inst.\native_mem_module.blk_mem_gen_v8_4_4_inst .memory[cols_per_line * i + j]);      \
+            $fwrite(fd, "\n");                                                                                         \
+        end
+
     task dump_system_state();
         automatic int fd;
         automatic int tmp;
@@ -109,58 +133,24 @@ module top_level import cpu_defs::*;(
 
         $fwrite(fd, "\nSECTION MMIO\n");
         $fwrite(fd, "DIV   TAC   TMA   TIMA\n");
-        tmp = mmio_timer.sys_counter;
+        tmp = mmio_timer.sys_counter - 4;
         $fwrite(fd, "%02x    %02x    %02x   %02x\n", 
             (tmp >> 8) & 8'hff, mmio_timer.tac, mmio_timer.tma, mmio_timer.tima);
 
         $fwrite(fd, "\nSECTION SYS\n");
         $fwrite(fd, "totalclks    divider\n");
-        tmp = mmio_timer.sys_counter;
+        tmp = mmio_timer.sys_counter - 4;
         $fwrite(fd, "%08x     %08x\n", cpu.totalclks, tmp);
 
         $fwrite(fd, "\nSECTION MEM\n");
         // in order for the below to compile you have to 
         // add `-L blk_mem_gen_v8_4_4_inst` to xevlog.exe
 
-        // VRAM, EXTRAM, WRAM, OAM, HRAM
-        num_bytes = 'h2000 + 'h2000 + 'h1000 + 'h1000 + 128 + 160;
-        num_lines = num_bytes / cols_per_line;
-        for (int i = 0; i < num_lines; i++) begin
-            automatic int addr = 'h8000 + i * cols_per_line; 
-            automatic int section = 0;
-            if (addr >= 'h8000 && addr < 'hA000) section = 0; 
-            if (addr >= 'hA000 && addr < 'hC000) section = 1; 
-            if (addr >= 'hC000 && addr < 'hE000) section = 2; 
-            if (addr >= 'hE000 && addr < 'hE0A0) begin
-                section = 3; addr = addr + 'h1E00;
-            end
-            if (addr >= 'hE0A0 && addr < 'hE120) begin 
-                section = 4; addr = addr + 'h1EE0;
-            end
-
-            $fwrite(fd, "%s:%04x  ", sections[section], addr);
-            for (int j = 0; j < cols_per_line; j++) begin
-                if (addr > 16'hFF00) begin
-                    $fwrite(fd, "%02x ", 
-                        hram.unit.inst.\native_mem_module.blk_mem_gen_v8_4_4_inst .memory[cols_per_line * (i-num_lines + 8) + j]);
-                end else begin
-                    $fwrite(fd, "%02x ", 
-                        mram.unit.inst.\native_mem_module.blk_mem_gen_v8_4_4_inst .memory[cols_per_line * i + j]);
-                end
-            end
-            $fwrite(fd, "\n");
-        end
-
-        num_bytes = 'h8000;
-        num_lines = num_bytes / cols_per_line;
-        for (int i = 0; i < num_lines; i++) begin
-            $fwrite(fd, "ROM0:%04x  ", i * cols_per_line);
-            for (int j = 0; j < cols_per_line; j++) 
-                $fwrite(fd, "%02x ", 
-                    rom.unit.inst.\native_mem_module.blk_mem_gen_v8_4_4_inst .memory[cols_per_line * i + j]);
-            $fwrite(fd, "\n");
-        end
-
+        `PRINT_MEM("_OAM", oam,  'd160);
+        `PRINT_MEM("VRAM", vram, 'h2000);
+        `PRINT_MEM("WRAM", wram, 'h2000);
+        `PRINT_MEM("HRAM", hram, 'd128);
+        `PRINT_MEM("ROM0", rom,  'h8000);
     end
     endtask 
 

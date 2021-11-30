@@ -621,7 +621,7 @@ endtask
 
 
 /* 
-    Perform ALU function on byte at memory location
+    Perform ALU function on byte at memory location. (update mem location)
     - 3 cycle instruction 
 */
 task ALU_OP8_MEM8; 
@@ -647,8 +647,16 @@ begin
             decoded_action.act <= WRITE_MEM8_REG8_ALU_HL; 
             decoded_action.arg <= action;
             decoded_action.dst <= inst;
-            decoded_action.src <= src_arg;     // increment incoming byte and write back
-            decoded_action.next_pc <= 0; 
+            decoded_action.src <= src_arg;   
+
+            if (action != ALU_OP_BIT_TEST) begin
+                // This is for all 16 cycle instructions
+                decoded_action.next_pc <= 0; 
+            end else begin
+                // this is for all BIT [hl] instructions (12 cycle)
+                decoded_action.next_pc <= 1; 
+                cycles_left <= 4 - 1;
+            end
         end
         /* Third Cycle */ 4:
         begin cycles_left <= 4 - 1;

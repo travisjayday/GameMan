@@ -28,7 +28,7 @@ module mmio_timer_m(
     logic[1:0] div_we_hi; 
     always_ff @(posedge clk) begin
         if (rst) begin
-            sys_counter <= 4; 
+            sys_counter <= 8; 
             div_we_hi <= 0;
         end
         else begin 

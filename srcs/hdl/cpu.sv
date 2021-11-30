@@ -1,21 +1,22 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
+// Company:             ApeGang
+// Engineer:            Travis, Ahmad, and Raiphy  
 // 
-// Create Date: 10/14/2021 12:10:42 AM
-// Design Name: 
-// Module Name: cpu
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
+// Create Date:         10/14/2021 12:10:42 AM
+// Design Name:         SM80 GameBoy CPU
+// Module Name:         cpu 
+// Project Name:        GameMan
+// Target Devices:      Nexys A7 FPGA
+// Tool Versions:       Vivado 2021.1
+// Description:         The main CPU FSM
 // 
-// Dependencies: 
+// Dependencies:A       None 
 // 
-// Revision:
+// Revision:           
 // Revision 0.01 - File Created
 // Additional Comments:
+// Ooga booga
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
@@ -106,12 +107,14 @@ module cpu_m import cpu_defs::*;(
                         end else begin
                             mmu.addr_select <= read_reg16(REG_PC) + 1; 
                         end
+                        mmu.write_enable <= 0; 
                     end
                     WRITE_REG16_IMM: begin
                         // arg + src concat make up 16 bit value to write to 16 bit reg
                         write_reg16(reg_select_t'(decoded_action.dst), 
                             {decoded_action.arg, decoded_action.src});
                         mmu.addr_select <= read_reg16(REG_PC) + 1; 
+                        mmu.write_enable <= 0; 
                         // intercept write to AF
                         if (reg_select_t'(decoded_action.dst) == REG_AF) begin
                             flags <= decoded_action.src[7:4];
@@ -123,6 +126,7 @@ module cpu_m import cpu_defs::*;(
                             read_reg8(reg_select_t'(decoded_action.src))
                         );
                         mmu.addr_select <= read_reg16(REG_PC) + 1; 
+                        mmu.write_enable <= 0; 
                     end
                     WRITE_REG16_REG16: begin
                         write_reg16(
@@ -130,6 +134,7 @@ module cpu_m import cpu_defs::*;(
                             read_reg16(reg_select_t'(decoded_action.src))
                         );
                         mmu.addr_select <= read_reg16(REG_PC) + 1; 
+                        mmu.write_enable <= 0; 
                     end
                     WRITE_MEM8_IMM: begin
                         // initiate memory write.
@@ -192,15 +197,23 @@ module cpu_m import cpu_defs::*;(
                         );
                     end
                     WRITE_MEM8_REG8_ALU_HL: begin
-                        // initiate memory write 
-                        mmu.addr_select <= read_reg16(REG_HL);
+                        // initiate memory write if writing is requested
+                        if (decoded_action.next_pc == 0) begin
+                            mmu.addr_select <= read_reg16(REG_HL);
+                            mmu.write_enable <= 1'b1; 
+                        end
+                        // or skip the write (for BIT [hl] instruction)
+                        else begin
+                            mmu.addr_select <= read_reg16(REG_PC) + 1; 
+                            mmu.write_enable <= 0; 
+                        end
+
                         // Do pre-ALU function on write value (increment or decremnt (used for INC(HL)))
                         {flags, mmu.write_value} <= alu_op8(
                             .op(alu_op_t'(decoded_action.arg)),
                             .dst(decoded_action.dst),
                             .src(decoded_action.src)
                         );
-                        mmu.write_enable <= 1'b1; 
                     end
                     READ_MEM8: begin
                         // Initiate memory read 
@@ -243,6 +256,7 @@ module cpu_m import cpu_defs::*;(
                         );
                         flags <= alu_res8[11:8];
                         mmu.addr_select <= read_reg16(REG_PC) + 1; 
+                        mmu.write_enable <= 0; 
                     end
                     ALU_REG8: begin
                         alu_res8 = alu_op8(
@@ -256,6 +270,7 @@ module cpu_m import cpu_defs::*;(
                         );
                         flags <= alu_res8[11:8];
                         mmu.addr_select <= read_reg16(REG_PC) + 1; 
+                        mmu.write_enable <= 0; 
                     end
                     ALU_REG16: begin
                         alu_res16 = alu_op16(
@@ -269,9 +284,11 @@ module cpu_m import cpu_defs::*;(
                         );
                         flags <= alu_res16[19:16];
                         mmu.addr_select <= read_reg16(REG_PC) + 1; 
+                        mmu.write_enable <= 0; 
                     end
                     CPU_NOP: begin
                         mmu.addr_select <= read_reg16(REG_PC) + 1; 
+                        mmu.write_enable <= 0; 
                     end
                     CPU_DIE: begin
                         cpu_died <= 1; 
