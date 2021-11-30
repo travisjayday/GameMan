@@ -45,7 +45,7 @@ PopulateShadowOAM:
 	jr nz, .loop
 	ret
 
-// Run two dma transfers one after another
+; Run two dma transfers one after another
 main: 
 	call CopyDMARoutine
   ld b, $50

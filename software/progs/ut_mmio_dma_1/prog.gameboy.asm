@@ -33,7 +33,7 @@ DMARoutine:
   ret
 DMARoutineEnd:
 
-// Run single dma transfers
+; Run single dma transfers
 PopulateShadowOAM:
 	ld hl, wShadowOAM
 	ld a, 160

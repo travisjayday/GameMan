@@ -128,7 +128,8 @@ def print_sna(sna):
 
 
 if __name__ == "__main__": 
-    res = parse_sna('C:\\Users\\Ahmad\\Desktop\\Ape_Gang_FPGA_Project\\software\\tools\\tetris.sna')
+    #res = parse_sna('C:\\Users\\Ahmad\\Desktop\\Ape_Gang_FPGA_Project\\software\\tools\\tetris.sna')
+    res = parse_sna('F:\\Projects\\GameMan\\software\\tools\\nintendo.sna')
     print(hex(res['regs']['SP']))
     print('mmio')
-    print(res['oam'])
+    print(res['vram'])

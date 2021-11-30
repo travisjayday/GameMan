@@ -23,9 +23,9 @@ CopyDMARoutine:
   jr  nz, .copy
   ret
 
-// Overwriting self as we're executing self.
-// this routie lives in HRAM and we're writing 
-// garbage to it as its executing
+; Overwriting self as we're executing self.
+; this routie lives in HRAM and we're writing 
+; garbage to it as its executing
 DMARoutine:
   ldh [$46], a
   ld  a, 160

@@ -141,7 +141,7 @@ if __name__ == "__main__":
     uts = []
     for prog in os.listdir(prog_dir):
         if not testall: 
-            if prog.startswith('ut_mmio_dma_3'):
+            if prog.startswith('ut_cpu_mem'):
                 uts.append(prog_dir + prog)
         else:
             if prog.startswith('ut_'):
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     for test_dir in uts: 
         prog_file = test_dir + os.sep + 'out.gb' 
         assemble_program(prog_file)
-        gb_emu = run_emu_as_bootrom(prog_file, debug=True)
+        gb_emu = run_emu_as_bootrom(prog_file, debug=False)
         gb_uut = run_xsim_program(prog_file)
 
         if gb_uut.compare(gb_emu): 

@@ -91,9 +91,10 @@ class GameBoyState():
         offset = self.section_offsets[section]
         for row in range(len(mem) // colw):
             row_addr = offset + int(row * colw)
-            print('{:_>4}:{:04x}  '.format(section, row_addr), end='', file=sio)
+            #print('{:_>4}:{:04x}  '.format(section, row_addr), end='', file=sio)
             for col in range(colw):
                 print('{:02x} '.format(mem[int(row * colw) + col]), end='', file=sio)
+            print('', file=sio) 
         return sio.getvalue()
     
     def stringify_mmio(self):
@@ -230,8 +231,16 @@ class GameBoyState():
 
 if __name__ == "__main__": 
     gb1 = GameBoyState()
-    gb1.load_from_sna('C:\\Users\\Ahmad\\Desktop\\Ape_Gang_FPGA_Project\\software\\tools\\tetris.sna')
+    #gb1.load_from_sna('C:\\Users\\Ahmad\\Desktop\\Ape_Gang_FPGA_Project\\software\\tools\\tetris.sna')
+    gb1.load_from_sna('F:\\Projects\\GameMan\\software\\tools\\nintendo.sna')
     print(gb1.stringify_mem('oam'))
+    #print(gb1.stringify_mem('vram'))
+    print(gb1.vram)
+    p = 'F:\\Projects\\GameMan\\software\\tools\\vram.bin'
+    f = open(p, 'wb')
+    f.write(gb1.vram)
+    f.close()
+    print('done')
     #gb2 = GameBoyState()
     #gb2.load_from_simdump('F:\\Projects\\gb80\\gb80.sim\\sim_1\\behav\\xsim\\simdump.hex')
 
