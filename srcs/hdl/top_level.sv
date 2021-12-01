@@ -50,6 +50,8 @@ module top_level import cpu_defs::*;(
     mem_if mmio_timer_if();
     mmio_timer_m mmio_timer(clk_4mhz, rst, mmio_timer_if, interrupts.timer);
 
+    mem_if ppu_oam_if();    // Busmaster 2
+    mem_if ppu_vram_if();   // Busmaster 3
 
     // DMA
     mem_if dma_mmu_if();    // Busmaster 1
@@ -63,6 +65,8 @@ module top_level import cpu_defs::*;(
         .rst(rst), 
         .cpu_req(cpu_mmu_if), 
         .dma_req(dma_mmu_if),
+        .ppu_oam_req(ppu_oam_if),
+        .ppu_vram_req(ppu_vram_if),
         .rom_if(rom_if), 
         .vram_if(vram_if),
         .oam_if(oam_if),
