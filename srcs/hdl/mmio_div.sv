@@ -4,11 +4,11 @@ module mmio_timer_m(
     input wire clk,
     input wire rst,
     mem_if.slave req,
-    output logic interrupt
+    output logic interrupt,
+    output logic[31:0] sys_counter // 0xFF04
     );
 
     /* MMIO Regs */
-    logic[31:0] sys_counter;        // 0xFF04
     logic [7:0] tima;               // 0xFF05
     logic [7:0] tma;                // 0xFF06
     logic [2:0] tac;                // 0xFF07

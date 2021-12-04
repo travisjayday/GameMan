@@ -1,13 +1,15 @@
 module top_level import cpu_defs::*;(
     input wire clk_100mhz, 
     input wire[15:0] sw,
-    output logic[15:0] led
+    output logic[15:0] led,
+    output logic aud_pwm,
+    output logic aud_sd
     );
     logic rst;
     assign rst = sw[15];
 
     reg_file_s regs_out;
-    assign led = regs_out.BC;
+    assign led = {regs_out.PC[7:0], 7'b0, pwm_val};
 
     logic clk_4mhz; 
     clk_gen _clk_gen(clk_100mhz, clk_4mhz);
@@ -47,8 +49,15 @@ module top_level import cpu_defs::*;(
     mmio_interrupts_m mmio_interrupts(clk_4mhz, rst, mmio_interrupts_if, interrupts);
 
     // 0xFF04 - Divider Regiser (R/W)
+    logic[31:0] sys_counter;
     mem_if mmio_timer_if();
-    mmio_timer_m mmio_timer(clk_4mhz, rst, mmio_timer_if, interrupts.timer);
+    mmio_timer_m mmio_timer(clk_4mhz, rst, mmio_timer_if, interrupts.timer, sys_counter);
+
+    logic pwm_val;
+    mem_if mmio_apu_if();
+    mmio_apu_m mmio_apu(clk_4mhz, rst, mmio_apu_if, sys_counter, pwm_val);
+    assign aud_pwm = pwm_val ? 1'bZ : 1'b0; 
+    assign aud_sd = 1;
 
     mem_if ppu_oam_if();    // Busmaster 2
     mem_if ppu_vram_if();   // Busmaster 3
@@ -74,7 +83,8 @@ module top_level import cpu_defs::*;(
         .hram_if(hram_if),
         .mmio_timer_if(mmio_timer_if),
         .mmio_ints_if(mmio_interrupts_if),
-        .mmio_dma_if(mmio_dma_if)
+        .mmio_dma_if(mmio_dma_if),
+        .mmio_apu_if(mmio_apu_if)
     );
 
 

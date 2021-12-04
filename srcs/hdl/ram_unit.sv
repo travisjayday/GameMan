@@ -27,6 +27,7 @@
 `define EN_INTS_IF          10'b00_0010_0000
 `define EN_HRAM_IF          10'b00_0100_0000
 `define EN_DMA_IF           10'b00_1000_0000
+`define EN_APU_IF           10'b01_0000_0000
 
 `define EN_PPU_OAM_IF       2'b01
 `define EN_PPU_VRAM_IF      2'b10
@@ -124,6 +125,7 @@ module mmu_m(
     mem_if.master hram_if,
     mem_if.master oam_if,
     mem_if.master vram_if,
+    mem_if.master mmio_apu_if,
     mem_if.master mmio_timer_if,
     mem_if.master mmio_ints_if,
     mem_if.master mmio_dma_if
@@ -210,6 +212,12 @@ module mmu_m(
             else if (cpu_req.addr_select == 16'hFF46)   `EN_INTERFACE(`EN_DMA_IF, 0)
             // 0xFFFF - IE - Interrupt Enable (R/W)
             else if (cpu_req.addr_select == 16'hFFFF)   `EN_INTERFACE(`EN_INTS_IF, 0)
+            // 0xFF16-0xFF19 - APU Audio Channel 2
+            else if (cpu_req.addr_select >= 16'hFF16 && cpu_req.addr_select <= 16'hFF19)
+                `EN_INTERFACE(`EN_APU_IF, 0)
+            // 0xFF24-0xFF26 - APU Control
+            else if (cpu_req.addr_select >= 16'hFF24 && cpu_req.addr_select <= 16'hFF26)
+                `EN_INTERFACE(`EN_APU_IF, 0)
         end
         if /* HRAM (0xFF80 - 0xFFFE) */
         (`ADDR_IN_RNG(16'hFF80, 16'hFFFF))          `EN_INTERFACE(`EN_HRAM_IF, -16'hFF80)
@@ -223,6 +231,7 @@ module mmu_m(
         if (en_ifs & `EN_INTS_IF) `MAP_INTERFACE(`EN_INTS_IF,  mmio_ints_if,  2'b00) else `UNMAP_INTERFACE(mmio_ints_if)
         if (en_ifs & `EN_HRAM_IF) `MAP_INTERFACE(`EN_HRAM_IF,  hram_if,       2'b00) else `UNMAP_INTERFACE(hram_if)
         if (en_ifs & `EN_DMA_IF)  `MAP_INTERFACE(`EN_DMA_IF,   mmio_dma_if,   2'b00) else `UNMAP_INTERFACE(mmio_dma_if)
+        if (en_ifs & `EN_APU_IF)  `MAP_INTERFACE(`EN_APU_IF,   mmio_apu_if,   2'b00) else `UNMAP_INTERFACE(mmio_apu_if)
         if ((en_ifs & `EN_VRAM_IF) || (en_ppu_ifs & `EN_PPU_VRAM_IF)) 
             `MAP_INTERFACE(`EN_VRAM_IF, vram_if, en_ppu_ifs)                         else `UNMAP_INTERFACE(vram_if)
         if ((en_ifs & `EN_OAM_IF) || (en_ppu_ifs & `EN_PPU_OAM_IF))  
