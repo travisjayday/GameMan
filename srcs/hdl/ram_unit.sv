@@ -172,7 +172,7 @@ module mmu_m(
         if /* VRAM      (0x8000 - 0x9FFF) */
         (`DMA_ADDR_IN_RNG(16'h8000, 16'hA000))      `DMA_EN_INTERFACE(`EN_VRAM_IF, -16'h8000)
         if /* EXTRAM    (0xA000 - 0xBFFF) */
-        (`DMA_ADDR_IN_RNG(16'hA000, 16'hC000))      begin /* pass. ask raiphy */ end
+        (`DMA_ADDR_IN_RNG(16'hA000, 16'hC000))      `DMA_EN_INTERFACE(`EN_ROM_IF, 0) // map these addresses back to the cartridge with no offset
         if /* WRAM      (0xC000 - 0xDFFF) */
         (`DMA_ADDR_IN_RNG(16'hC000, 16'hE000))      `DMA_EN_INTERFACE(`EN_WRAM_IF, -16'hC000)
         if /* ECHO RAM  (0xE000 - 0xFDFF) */
@@ -186,7 +186,7 @@ module mmu_m(
         if /* VRAM      (0x8000 - 0x9FFF) */
         (`ADDR_IN_RNG(16'h8000, 16'hA000))          `EN_INTERFACE(`EN_VRAM_IF, -16'h8000)
         if /* EXTRAM    (0xA000 - 0xBFFF) */
-        (`ADDR_IN_RNG(16'hA000, 16'hC000))          begin /* pass. ask raiphy */ end
+        (`ADDR_IN_RNG(16'hA000, 16'hC000))          `EN_INTERFACE(`EN_ROM_IF, 0) // map these addresses back to the cartridge with no offset
         if /* WRAM      (0xC000 - 0xDFFF) */
         (`ADDR_IN_RNG(16'hC000, 16'hE000))          `EN_INTERFACE(`EN_WRAM_IF, -16'hC000)
         if /* ECHO RAM  (0xE000 - 0xFDFF) */
