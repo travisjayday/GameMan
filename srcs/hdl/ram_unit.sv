@@ -19,16 +19,17 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-`define EN_ROM_IF           10'b00_0000_0001
-`define EN_WRAM_IF          10'b00_0000_0010
-`define EN_OAM_IF           10'b00_0000_0100
-`define EN_VRAM_IF          10'b00_0000_1000
-`define EN_TIMER_IF         10'b00_0001_0000
-`define EN_INTS_IF          10'b00_0010_0000
-`define EN_HRAM_IF          10'b00_0100_0000
-`define EN_DMA_IF           10'b00_1000_0000
-`define EN_APU_IF           10'b01_0000_0000
-`define EN_PPU_IF           10'b10_0000_0000
+`define EN_ROM_IF           12'b0000_0000_0001
+`define EN_WRAM_IF          12'b0000_0000_0010
+`define EN_OAM_IF           12'b0000_0000_0100
+`define EN_VRAM_IF          12'b0000_0000_1000
+`define EN_TIMER_IF         12'b0000_0001_0000
+`define EN_INTS_IF          12'b0000_0010_0000
+`define EN_HRAM_IF          12'b0000_0100_0000
+`define EN_DMA_IF           12'b0000_1000_0000
+`define EN_APU_IF           12'b0001_0000_0000
+`define EN_PPU_IF           12'b0010_0000_0000
+`define EN_JOYPAD_IF        12'b0100_0000_0000
 
 `define EN_PPU_OAM_IF       2'b01
 `define EN_PPU_VRAM_IF      2'b10
@@ -130,14 +131,15 @@ module mmu_m(
     mem_if.master mmio_ppu_if,
     mem_if.master mmio_timer_if,
     mem_if.master mmio_ints_if,
-    mem_if.master mmio_dma_if
+    mem_if.master mmio_dma_if,
+    mem_if.master mmio_joypad_if
     );
 
     always_comb begin
-        logic [9:0] en_cpu_ifs;
-        logic [9:0] en_dma_ifs;
+        logic [11:0] en_cpu_ifs;
+        logic [11:0] en_dma_ifs;
         logic [1:0] en_ppu_ifs;
-        logic [9:0] en_ifs;
+        logic [11:0] en_ifs;
         logic [15:0] mapped_cpu_addr; 
         logic [15:0] mapped_dma_addr; 
         logic [15:0] mapped_ppu_oam_addr; 
@@ -214,6 +216,8 @@ module mmu_m(
             else if (cpu_req.addr_select == 16'hFF46)   `EN_INTERFACE(`EN_DMA_IF, 0)
             // 0xFFFF - IE - Interrupt Enable (R/W)
             else if (cpu_req.addr_select == 16'hFFFF)   `EN_INTERFACE(`EN_INTS_IF, 0)
+            // 0xFF00 - Joypad - Buttons (R/W)
+            else if (cpu_req.addr_select == 16'hFF00)   `EN_INTERFACE(`EN_JOYPAD_IF, 0)
             // 0xFF40-0xFF45 - PPU Registers
             else if (cpu_req.addr_select >= 16'hFF40 && cpu_req.addr_select <= 16'hFF45)
                 `EN_INTERFACE(`EN_PPU_IF, 0)
@@ -233,16 +237,17 @@ module mmu_m(
         en_ifs = en_dma_ifs | en_cpu_ifs;
 
         // Handle bus arbitration between CPU, DMA engine, and PPU
-        if (en_ifs & `EN_ROM_IF)  `MAP_INTERFACE(`EN_ROM_IF,   rom_if,        2'b00) else `UNMAP_INTERFACE(rom_if)
-        if (en_ifs & `EN_WRAM_IF) `MAP_INTERFACE(`EN_WRAM_IF,  wram_if,       2'b00) else `UNMAP_INTERFACE(wram_if)
-        if (en_ifs & `EN_TIMER_IF)`MAP_INTERFACE(`EN_TIMER_IF, mmio_timer_if, 2'b00) else `UNMAP_INTERFACE(mmio_timer_if)
-        if (en_ifs & `EN_INTS_IF) `MAP_INTERFACE(`EN_INTS_IF,  mmio_ints_if,  2'b00) else `UNMAP_INTERFACE(mmio_ints_if)
-        if (en_ifs & `EN_HRAM_IF) `MAP_INTERFACE(`EN_HRAM_IF,  hram_if,       2'b00) else `UNMAP_INTERFACE(hram_if)
-        if (en_ifs & `EN_DMA_IF)  `MAP_INTERFACE(`EN_DMA_IF,   mmio_dma_if,   2'b00) else `UNMAP_INTERFACE(mmio_dma_if)
-        if (en_ifs & `EN_APU_IF)  `MAP_INTERFACE(`EN_APU_IF,   mmio_apu_if,   2'b00) else `UNMAP_INTERFACE(mmio_apu_if)
+        if (en_ifs & `EN_ROM_IF)  `MAP_INTERFACE(`EN_ROM_IF,   rom_if,         2'b00) else `UNMAP_INTERFACE(rom_if)
+        if (en_ifs & `EN_WRAM_IF) `MAP_INTERFACE(`EN_WRAM_IF,  wram_if,        2'b00) else `UNMAP_INTERFACE(wram_if)
+        if (en_ifs & `EN_TIMER_IF)`MAP_INTERFACE(`EN_TIMER_IF, mmio_timer_if,  2'b00) else `UNMAP_INTERFACE(mmio_timer_if)
+        if (en_ifs & `EN_INTS_IF) `MAP_INTERFACE(`EN_INTS_IF,  mmio_ints_if,   2'b00) else `UNMAP_INTERFACE(mmio_ints_if)
+        if (en_ifs & `EN_HRAM_IF) `MAP_INTERFACE(`EN_HRAM_IF,  hram_if,        2'b00) else `UNMAP_INTERFACE(hram_if)
+        if (en_ifs & `EN_DMA_IF)  `MAP_INTERFACE(`EN_DMA_IF,   mmio_dma_if,    2'b00) else `UNMAP_INTERFACE(mmio_dma_if)
+        if (en_ifs & `EN_APU_IF)  `MAP_INTERFACE(`EN_APU_IF,   mmio_apu_if,    2'b00) else `UNMAP_INTERFACE(mmio_apu_if)
+        if (en_ifs & `EN_JOYPAD_IF)`MAP_INTERFACE(`EN_JOYPAD_IF,mmio_joypad_if,2'b00) else `UNMAP_INTERFACE(mmio_joypad_if)
         if ((en_ifs & `EN_VRAM_IF) || (en_ppu_ifs & `EN_PPU_VRAM_IF)) 
-            `MAP_INTERFACE(`EN_VRAM_IF, vram_if, en_ppu_ifs)                         else `UNMAP_INTERFACE(vram_if)
+            `MAP_INTERFACE(`EN_VRAM_IF, vram_if, en_ppu_ifs)                          else `UNMAP_INTERFACE(vram_if)
         if ((en_ifs & `EN_OAM_IF) || (en_ppu_ifs & `EN_PPU_OAM_IF))  
-            `MAP_INTERFACE(`EN_OAM_IF, oam_if, en_ppu_ifs)                           else `UNMAP_INTERFACE(oam_if)
+            `MAP_INTERFACE(`EN_OAM_IF, oam_if, en_ppu_ifs)                            else `UNMAP_INTERFACE(oam_if)
     end
 endmodule

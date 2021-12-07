@@ -38,7 +38,7 @@ module mmio_ppu_m(
     logic vram_rd, vram_wr, oam_wr, oam_rd;
     logic [4:0] state_ppu;
 
-    ppu _ppu(
+    /*ppu _ppu(
         .clk_in(clk), .rst_in(rst), .start_in(start_in),
         //LCD Logic
         .pixel_out(pixel_out),
@@ -55,5 +55,5 @@ module mmio_ppu_m(
         .mmio_dout(req.read_out), .mmio_a(req.addr_select), .mmio_din(req.write_value), .mmio_rd(!req.write_enable), .mmio_wr(req.write_enable),
         //DEBUG
         .state_out(state_ppu)
-        );
+        );*/
 endmodule

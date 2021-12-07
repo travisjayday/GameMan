@@ -57,6 +57,7 @@ module ppu(
     output logic [4:0] state_out
     );
     logic [7:0] LCDC, STAT, SCX, SCY, WX, WY, LY, LYC;
+
     //OAM SEARCH FSM / MODE 2 FSM LOGIC:
     logic mode_2_start, mode_2_done;
     logic [7:0] mode_2_time;
@@ -245,6 +246,25 @@ module ppu(
             end 
         end  
      end 
+
+
+    /* Interrupt Logic */
+
+    // interrupt triggers (active high)
+    logic interrupt_lyc, interrupt_mode2, interrupt_mode1, interrupt_mode0; 
+
+    // OR interrupt triggers if they are enabled to create Statline
+    assign stat_interrupt = (interrupt_lyc   & LCDC[6]) | 
+                            (interrupt_mode2 & LCDC[5]) | 
+                            (interrupt_mode1 & LCDC[4]) | 
+                            (interrupt_mode0 & LCDC[3]);
+    // Ask Ahmad?
+    states last_state; 
+    always @(posedge clk) begin last_state <= state; end
+    assign interrupt_mode0 = last_state != MODE_0 && state == MODE_0;  
+    assign interrupt_mode2 = mode_2_start;
+    assign interrupt_mode3 = mode_3_start;
+    assign interrupt_lyc = LY == LYC? 1 : 0;
 
 endmodule
 `default_nettype wire

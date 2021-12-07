@@ -3,7 +3,8 @@ module top_level import cpu_defs::*;(
     input wire[15:0] sw,
     output logic[15:0] led,
     output logic aud_pwm,
-    output logic aud_sd
+    output logic aud_sd,
+    input wire [7:0] je
     );
     logic rst;
     assign rst = sw[15];
@@ -60,6 +61,10 @@ module top_level import cpu_defs::*;(
     assign aud_pwm = pwm_val ? 1'bZ : 1'b0; 
     assign aud_sd = 1;
 
+    // 0xFF00 - Joypad 
+    mem_if mmio_joypad_if();
+    mmio_joypad_m joypad(clk_4mhz, rst, je, mmio_joypad_if);
+
     // PPU
     mem_if mmio_ppu_if();      
     mem_if ppu_oam_if();    // Busmaster 2
@@ -100,7 +105,8 @@ module top_level import cpu_defs::*;(
         .mmio_ints_if(mmio_interrupts_if),
         .mmio_dma_if(mmio_dma_if),
         .mmio_apu_if(mmio_apu_if),
-        .mmio_ppu_if(mmio_ppu_if)
+        .mmio_ppu_if(mmio_ppu_if),
+        .mmio_joypad_if(mmio_joypad_if)
     );
 
 
