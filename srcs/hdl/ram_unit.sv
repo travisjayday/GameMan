@@ -28,6 +28,7 @@
 `define EN_HRAM_IF          10'b00_0100_0000
 `define EN_DMA_IF           10'b00_1000_0000
 `define EN_APU_IF           10'b01_0000_0000
+`define EN_PPU_IF           10'b10_0000_0000
 
 `define EN_PPU_OAM_IF       2'b01
 `define EN_PPU_VRAM_IF      2'b10
@@ -126,6 +127,7 @@ module mmu_m(
     mem_if.master oam_if,
     mem_if.master vram_if,
     mem_if.master mmio_apu_if,
+    mem_if.master mmio_ppu_if,
     mem_if.master mmio_timer_if,
     mem_if.master mmio_ints_if,
     mem_if.master mmio_dma_if
@@ -212,6 +214,12 @@ module mmu_m(
             else if (cpu_req.addr_select == 16'hFF46)   `EN_INTERFACE(`EN_DMA_IF, 0)
             // 0xFFFF - IE - Interrupt Enable (R/W)
             else if (cpu_req.addr_select == 16'hFFFF)   `EN_INTERFACE(`EN_INTS_IF, 0)
+            // 0xFF40-0xFF45 - PPU Registers
+            else if (cpu_req.addr_select >= 16'hFF40 && cpu_req.addr_select <= 16'hFF45)
+                `EN_INTERFACE(`EN_PPU_IF, 0)
+            // 0xFF4A-0xFF4b - More PPU Registesr
+            else if (cpu_req.addr_select >= 16'hFF4A && cpu_req.addr_select <= 16'hFF4B)
+                `EN_INTERFACE(`EN_PPU_IF, 0)
             // 0xFF16-0xFF19 - APU Audio Channel 2
             else if (cpu_req.addr_select >= 16'hFF16 && cpu_req.addr_select <= 16'hFF19)
                 `EN_INTERFACE(`EN_APU_IF, 0)

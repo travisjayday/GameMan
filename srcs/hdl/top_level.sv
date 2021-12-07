@@ -53,14 +53,29 @@ module top_level import cpu_defs::*;(
     mem_if mmio_timer_if();
     mmio_timer_m mmio_timer(clk_4mhz, rst, mmio_timer_if, interrupts.timer, sys_counter);
 
+    // APU
     logic pwm_val;
     mem_if mmio_apu_if();
     mmio_apu_m mmio_apu(clk_4mhz, rst, mmio_apu_if, sys_counter, pwm_val);
     assign aud_pwm = pwm_val ? 1'bZ : 1'b0; 
     assign aud_sd = 1;
 
+    // PPU
+    mem_if mmio_ppu_if();      
     mem_if ppu_oam_if();    // Busmaster 2
     mem_if ppu_vram_if();   // Busmaster 3
+    logic [1:0] pixel_out;
+    logic [14:0] lcd_addr;
+    logic lcd_write;
+    mmio_ppu_m the_ppu(
+        .clk(clk_4mhz),
+        .rst(rst),
+        .req(mmio_ppu_if),
+        .ppu_oam_req(ppu_oam_if),
+        .ppu_vram_req(ppu_vram_if),
+        .lcd_addr(lcd_addr),
+        .lcd_write(lcd_write)
+    );
 
     // DMA
     mem_if dma_mmu_if();    // Busmaster 1
@@ -84,7 +99,8 @@ module top_level import cpu_defs::*;(
         .mmio_timer_if(mmio_timer_if),
         .mmio_ints_if(mmio_interrupts_if),
         .mmio_dma_if(mmio_dma_if),
-        .mmio_apu_if(mmio_apu_if)
+        .mmio_apu_if(mmio_apu_if),
+        .mmio_ppu_if(mmio_ppu_if)
     );
 
 

@@ -31,21 +31,34 @@ SECTION "Header", ROM0[$0]
 	; Enable Channel 2
 	SET_REG NR51, $FF
 
-
+raise:
 	SET_REG NR21, $80
-	SET_REG NR22, $F0
+	SET_REG NR22, $F1
 	SET_REG NR23, $d6
 	SET_REG NR24, $86
 
-loop_n:
-	jp loop_n
-
-	ld b, $ff
-loop2:
-	ld a, $ff
+	ld hl, $ffff
 loop:
-	dec a
+	dec hl
+	xor a, a
+	or a, h
+	or a, l
 	jp nz, loop
-	dec b
+
+	SET_REG NR21, $80
+	SET_REG NR22, $09
+	SET_REG NR23, $d6
+	SET_REG NR24, $86
+
+
+	ld hl, $ffff
+loop2:
+	dec hl
+	xor a, a
+	or a, h
+	or a, l
 	jp nz, loop2
+
+	jp raise
+
 	die	

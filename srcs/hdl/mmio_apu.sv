@@ -65,6 +65,24 @@ module mmio_apu_m(
     logic[5:0] out_L_den;
     logic[5:0] out_R_den; 
 
+    
+    /* Frame Sequencer Clock Driver */
+    // Falling edge of bit 5 of DIV (upper 8 bits of sysclock) steps the FS clock
+    // Freq: 512Hz
+    logic previous_fs_bit;
+    logic[2:0] fs_clock;
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            previous_fs_bit <= 0;
+            fs_clock <= 0; 
+        end else begin
+            previous_fs_bit <= sys_counter[7+5];
+            if (previous_fs_bit && !sys_counter[7+5]) begin
+                fs_clock <= fs_clock + 1;
+            end
+        end
+    end
+
     /* DAC Sound Logic */
     always_comb begin
         logic[5:0] tmp_R;
@@ -97,37 +115,6 @@ module mmio_apu_m(
     assign mono_out = (out_L_num * (reg_nr50[2:0]+1) * 2) / out_L_den; // max vol = (15 * 4 * 8 * 2) / 4= 240. min vol = 2
     pwm_m pwm (.clk_in(clk), .rst_in(rst), .level_in(mono_out), .pwm_out(pwm_val));
 
-    /* Channel 2 - Logic */
-    logic [7:0] waveforms [4:0]; 
-    logic [2:0] wave_duty_position;
-    logic [13:0] freq_timer; 
-    logic [11:0] frequency_reload;
-    logic [3:0] current_volume;
-    assign frequency_reload = {reg_nr24[2:0], reg_nr23};
-    assign current_volume = reg_nr22[7:4];
-    always_ff @(posedge clk) begin
-        if (rst) begin
-            // Waveform Duty Cycle Table
-            waveforms[0] <= 8'b0000_0001;   // 12.5%
-            waveforms[1] <= 8'b0000_0011;   // 25%
-            waveforms[2] <= 8'b0000_1111;   // 50%
-            waveforms[3] <= 8'b1111_1100;   // 75%
-            freq_timer <= 0;
-            ch2_out <= 0;
-            wave_duty_position <= 0;
-        end
-        else begin 
-            if (freq_timer == 0) begin
-                freq_timer <= (2048 - frequency_reload) * 4;
-                wave_duty_position <= wave_duty_position + 1; 
-            end
-            else begin
-                freq_timer <= freq_timer - 1; 
-            end
-            ch2_out <= waveforms[reg_nr21[7:6]][wave_duty_position] * current_volume;
-        end
-    end
-
     /* 0xFF16 - NR21 - Channel 2 Sound Length / Wave Pattern Duty (R/W*) */
     /* 0xFF17 - NR22 - Channel 2 Volume Envelope (R/W) */
     /* 0xFF23 - NR23 - Channel 2 Frequency Lo Data (W) */
@@ -139,6 +126,7 @@ module mmio_apu_m(
     logic[1:0] nr50_we_hi;
     logic[1:0] nr51_we_hi;
     logic[1:0] nr52_we_hi;
+    logic nr24_triggered;
     always_ff @(posedge clk) begin
         if (rst) begin
             nr21_we_hi <= 0;
@@ -151,13 +139,19 @@ module mmio_apu_m(
 
             reg_nr24 <= 8'hff;
             reg_nr23 <= 8'hff;
+            reg_nr22 <= 8'hff;
+
+            nr24_triggered <= 0; 
         end
         else begin 
             // WE has been hi for 1 cycle. Reset counter on next rising edge
             if (nr21_we_hi == 1) reg_nr21 <= req.write_value; 
             if (nr22_we_hi == 1) reg_nr22 <= req.write_value; 
             if (nr23_we_hi == 1) reg_nr23 <= req.write_value; 
-            if (nr24_we_hi == 1) reg_nr24 <= req.write_value; 
+            if (nr24_we_hi == 1) begin 
+                reg_nr24 <= req.write_value; 
+                nr24_triggered <= req.write_value[7]; 
+            end else begin nr24_triggered <= 0; end 
             if (nr50_we_hi == 1) reg_nr50 <= req.write_value; 
             if (nr51_we_hi == 1) reg_nr51 <= req.write_value; 
             if (nr52_we_hi == 1) reg_nr52 <= req.write_value; 
@@ -179,6 +173,66 @@ module mmio_apu_m(
             else nr52_we_hi <= 0; 
         end
     end
+
+    /* Channel 2 - Logic */
+    logic [7:0] waveforms [4:0]; 
+    logic [2:0] wave_duty_position;
+    logic [13:0] freq_timer; 
+    logic [11:0] frequency_reload;
+    logic [3:0] current_volume;
+    assign frequency_reload = {reg_nr24[2:0], reg_nr23};
+    logic last_trigger_val;
+    logic [2:0] last_fsclock;
+    logic [2:0] envelope_period; 
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            // Waveform Duty Cycle Table
+            waveforms[0] <= 8'b0000_0001;   // 12.5%
+            waveforms[1] <= 8'b0000_0011;   // 25%
+            waveforms[2] <= 8'b0000_1111;   // 50%
+            waveforms[3] <= 8'b1111_1100;   // 75%
+            freq_timer <= 0;
+            ch2_out <= 0;
+            wave_duty_position <= 0;
+            current_volume <= 0; 
+            envelope_period <= 0; 
+            last_trigger_val <= 0;
+        end
+        else begin 
+            // If Trigger Event occurs, start Enveloping audio (Change volume over time)
+            if (nr24_triggered) begin
+                envelope_period <= reg_nr22[2:0];
+                current_volume <= reg_nr22[7:4];
+            end
+            else begin
+                last_fsclock <= fs_clock;
+                if (fs_clock == 7 && last_fsclock == 6) begin
+                    if (reg_nr22[2:0] != 0) begin
+                        envelope_period <= envelope_period - 1; 
+                        if (envelope_period == 0) begin
+                            envelope_period <= reg_nr22[2:0];
+                            if (current_volume < 4'hF && reg_nr22[3]) begin
+                                current_volume <= current_volume + 1;
+                            end else if (current_volume > 4'h0 && !reg_nr22[3]) begin
+                                current_volume <= current_volume - 1; 
+                            end
+                        end
+                    end
+                end
+            end     
+
+            // Output correct wave with correct frequency
+            if (freq_timer == 0) begin
+                freq_timer <= (2048 - frequency_reload) * 4;
+                wave_duty_position <= wave_duty_position + 1; 
+            end
+            else begin
+                freq_timer <= freq_timer - 1; 
+            end
+            ch2_out <= waveforms[reg_nr21[7:6]][wave_duty_position] * current_volume;
+        end
+    end
+
 
 
 endmodule

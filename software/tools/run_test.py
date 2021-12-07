@@ -96,12 +96,12 @@ def run_emu_as_bootrom(prog_file, debug=False):
         p.terminate()
     return gb
 
-def run_xsim_program(prog_file): 
+def run_xsim_program(prog_file, only_select=False): 
     pwd = os.getcwd()
 
     # Select program for XSIM
     sim_selector.select_prog(prog_file)
-    return
+    if only_select: return 
 
     #args = 'cpu_tb1_behav -key {Behavioral:sim_1:Functional:cpu_tb1} -tclbatch {cpu_tb1.tcl} -log run.log'
     args = 'cpu_tb1_behav -key {Behavioral:sim_1:Functional:cpu_tb1} -runall -log run.log'
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     uts = []
     for prog in os.listdir(prog_dir):
         if not testall: 
-            if prog.startswith('ut_mmio_apu_1'):
+            if prog.startswith('prog_apu_envelope_2'):
                 uts.append(prog_dir + prog)
         else:
             if prog.startswith('ut_'):
@@ -153,8 +153,10 @@ if __name__ == "__main__":
     for test_dir in uts: 
         prog_file = test_dir + os.sep + 'out.gb' 
         assemble_program(prog_file)
-        gb_emu = run_emu_as_bootrom(prog_file, debug=True)
-        gb_uut = run_xsim_program(prog_file)
+        only_select =False 
+        if not only_select:
+            gb_emu = run_emu_as_bootrom(prog_file, debug=True)
+        gb_uut = run_xsim_program(prog_file, only_select=only_select)
 
         if gb_uut.compare(gb_emu): 
             passed.append(test_dir)
