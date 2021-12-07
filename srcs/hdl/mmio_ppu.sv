@@ -28,7 +28,9 @@ module mmio_ppu_m(
     mem_if.master ppu_vram_req,
     output wire [1:0] pixel_out,
     output wire [14:0] lcd_addr,
-    output wire lcd_write
+    output wire lcd_write,
+    output wire vblank_interrupt,
+    output wire statline_interrupt
     );
 
     logic start_in;
@@ -38,7 +40,7 @@ module mmio_ppu_m(
     logic vram_rd, vram_wr, oam_wr, oam_rd;
     logic [4:0] state_ppu;
 
-    /*ppu _ppu(
+    ppu _ppu(
         .clk_in(clk), .rst_in(rst), .start_in(start_in),
         //LCD Logic
         .pixel_out(pixel_out),
@@ -53,7 +55,9 @@ module mmio_ppu_m(
         .oam_rd(oam_rd), .oam_wr(oam_wr), 
         //CPU R/W REGISTERS 
         .mmio_dout(req.read_out), .mmio_a(req.addr_select), .mmio_din(req.write_value), .mmio_rd(!req.write_enable), .mmio_wr(req.write_enable),
+        .stat_interrupt(statline_interrupt),
+        .vblank_interrupt(vblank_interrupt),
         //DEBUG
         .state_out(state_ppu)
-        );*/
+        );
 endmodule

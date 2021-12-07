@@ -52,7 +52,8 @@ module ppu(
     input wire          mmio_rd,
     input wire          mmio_wr,
     //STAT INTERUPT LINE
-    output logic stat_interupt,
+    output logic stat_interrupt,
+    output logic vblank_interrupt,
     //DEBUG    
     output logic [4:0] state_out
     );
@@ -258,12 +259,13 @@ module ppu(
                             (interrupt_mode2 & LCDC[5]) | 
                             (interrupt_mode1 & LCDC[4]) | 
                             (interrupt_mode0 & LCDC[3]);
+    assign vblank_interrupt = interrupt_mode1;
     // Ask Ahmad?
     states last_state; 
-    always @(posedge clk) begin last_state <= state; end
+    always @(posedge clk_in) begin last_state <= state; end
     assign interrupt_mode0 = last_state != MODE_0 && state == MODE_0;  
-    assign interrupt_mode2 = mode_2_start;
-    assign interrupt_mode3 = mode_3_start;
+    assign interrupt_mode1 = last_state != MODE_1 && state == MODE_1;
+    assign interrupt_mode2 = last_state != MODE_2 && state == MODE_2;
     assign interrupt_lyc = LY == LYC? 1 : 0;
 
 endmodule

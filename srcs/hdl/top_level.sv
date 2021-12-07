@@ -43,8 +43,6 @@ module top_level import cpu_defs::*;(
     // 0xFF05 - IF (R/W)
     interrupt_lines_s interrupts; 
     // For now, pull other interrupts low
-    assign interrupts.vblank = 0;
-    assign interrupts.lcd_stat = 0;
     assign interrupts.joypad = 0; 
     mem_if mmio_interrupts_if(); 
     mmio_interrupts_m mmio_interrupts(clk_4mhz, rst, mmio_interrupts_if, interrupts);
@@ -79,7 +77,9 @@ module top_level import cpu_defs::*;(
         .ppu_oam_req(ppu_oam_if),
         .ppu_vram_req(ppu_vram_if),
         .lcd_addr(lcd_addr),
-        .lcd_write(lcd_write)
+        .lcd_write(lcd_write),
+        .vblank_interrupt(interrupts.vblank),
+        .statline_interrupt(interrupts.lcd_stat)
     );
 
     // DMA
@@ -108,7 +108,6 @@ module top_level import cpu_defs::*;(
         .mmio_ppu_if(mmio_ppu_if),
         .mmio_joypad_if(mmio_joypad_if)
     );
-
 
     // CPU 
     logic cpu_died;
