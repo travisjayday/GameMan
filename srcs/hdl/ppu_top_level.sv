@@ -3,18 +3,17 @@
 
 module ppu_top_level(
    input wire clk_100mhz,
-   input wire [4:0] sw,
+   input wire btnu,
+   input wire btnc,
    output logic[3:0] vga_r,
    output logic[3:0] vga_b,
    output logic[3:0] vga_g,
    output logic vga_hs,
    output logic vga_vs,
-   //output logic led16_r,
-   //output logic led16_g,
-   //output logic led16_b,
    output logic [15:0] led
    );
-    
+    parameter DEBOUNCE_COUNT = 100000;
+
     logic vclock;
     clk_wiz_0 clkdivider(.reset(1'b0),.clk_in1(clk_100mhz), .clk_out1(vclock));
     
@@ -24,7 +23,7 @@ module ppu_top_level(
     logic vsync;
     logic blank;
     
-    vga vg_ape(.rst(sw[3]),.vclock_in(vclock),.hcount_out(hcount),.vcount_out(vcount),
+    vga vg_ape(.rst(btnu),.vclock_in(vclock),.hcount_out(hcount),.vcount_out(vcount),
           .hsync_out(hsync),.vsync_out(vsync),.blank_out(blank));
     
     logic [7:0] x;
@@ -52,51 +51,48 @@ module ppu_top_level(
     // PPU AHMAD START
     /////////////////////////////////////////////////////////////////////////////////////////////////
     //INPUTS 
-    logic rst_in, start_in, clk_4mhz;
-    assign clk_4mhz = vclock;
-    //clk_gen _clk_gen(.clk_in(clk_100mhz),.clk_out(clk_4mhz));
-    //clk_wiz_1 clk_ppu(.clk_in1(vclock), .clk_out1(clk_4mhz));
-    //clk_divider clk_ppu_4(.clk_in(clk_8mhz), .rst_in(sw[3]), .clk_out(clk_4mhz));
+    logic ppu_start, clk_4mhz;
+    clk_gen _clk_gen(.clk_in(clk_100mhz),.clk_out(clk_4mhz));
     //OUTPUTS
+    logic ppu_hsync, ppu_vsync;
+    logic [7:0] ppu_vcount, ppu_hcount;
     logic [1:0] pixel_out;
-    logic [14:0] lcd_addr;
+    logic [15:0] lcd_addr;
     logic lcd_write;
     //VRAM DATA BUS, 0x8000 - 0x9FFF 
     logic [7:0]  vram_dout;
     logic [15:0] vram_a;
     logic [7:0]  vram_din;
-    logic        vram_rd;
     logic        vram_wr; 
     //OAM Data Bus, 0xFE00 - 0xFE9F 
     logic [7:0]  oam_dout;
     logic [15:0] oam_a;
     logic [7:0]  oam_din;
-    logic        oam_rd;
     logic        oam_wr; 
     //CPU R/W REGISTERS 
     logic [7:0]  mmio_dout;
     logic [15:0] mmio_a;
     logic [7:0]  mmio_din;
-    logic        mmio_rd;
     logic        mmio_wr;
-    //DEBUG
-    logic [4:0] state_ppu;
+    
+    logic frame_advance;
+    debounce #(.DEBOUNCE_COUNT(DEBOUNCE_COUNT)) db1 (.reset_in(btnu), .clock_in(clk_4mhz), .noisy_in(btnc),.clean_out(frame_advance));
+    
     ppu uut(
-        .clk_in(clk_4mhz), .rst_in(rst_in), .start_in(start_in),
+        .clk(clk_4mhz), .rst(btnu), .start(btnu),
         //LCD Logic
+        .hsync(ppu_hsync), .vsync(ppu_vsync),
+        .h_count(ppu_hcount), .v_count(ppu_vcount), 
         .pixel_out(pixel_out),
         //SCREEN BUFFER
-        .lcd_addr(lcd_addr),
-        .lcd_write(lcd_write),
+        .lcd_a(lcd_addr), .lcd_wr(lcd_write),
         //VRAM DATA BUS, 0x8000 - 0x9FFF 
-        .vram_dout(vram_dout), .vram_a(vram_a), .vram_din(vram_din), .vram_rd(vram_rd), .vram_wr(vram_wr), 
+        .vram_dout(vram_dout), .vram_a(vram_a), .vram_din(vram_din),
         //OAM Data Bus, 0xFE00 - 0xFE9F 
-        .oam_dout(oam_dout), .oam_a(oam_a), .oam_din(oam_din), .oam_rd(oam_rd), .oam_wr(oam_wr), 
+        .oam_dout(oam_dout), .oam_a(oam_a), .oam_din(oam_din), 
         //CPU R/W REGISTERS 
-        .mmio_dout(mmio_dout), .mmio_a(mmio_a), .mmio_din(mmio_din), .mmio_rd(mmio_rd), .mmio_wr(mmio_wr),
-        //DEBUG
-        .state_out(state_ppu)
-        );
+        .mmio_dout(mmio_dout), .mmio_a(mmio_a), .mmio_din(mmio_din), .mmio_wr(mmio_wr)
+    );
     
     bram_vram unit_vram(
         .addra(vram_a[12:0]),
@@ -114,18 +110,6 @@ module ppu_top_level(
         .douta(oam_dout)
         );
         
-    logic [14:0] addra;
-    always_ff @(posedge clk_4mhz) begin
-        if(sw[3]) begin
-            rst_in <= 1;
-            //addra <= 0; 
-        end else begin
-            rst_in <= 0;
-            //addra <= addra + 1;
-        end 
-    end 
-    
-    
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // PPU AHMAD END
     /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -134,9 +118,7 @@ module ppu_top_level(
     assign addrb = addr_valid ? addr : 15'd0; 
     
     
-    assign led = state_ppu;
-    
-    ram_lcd lcd(            .addra(lcd_addr),
+    ram_lcd lcd(            .addra(lcd_addr[14:0]),
                             .clka(clk_4mhz),
                             .dina(pixel_out),
                             .wea(lcd_write),
@@ -157,9 +139,9 @@ module ppu_top_level(
     
     //assign {led16_r,led16_g,led16_b} = sw[2:0];
     
-    assign red   = sw[2] ? { ~pixel_data, ~pixel_data } : 4'd0;
-    assign green = sw[1] ? { ~pixel_data, ~pixel_data } : 4'd0;
-    assign blue  = sw[0] ? { ~pixel_data, ~pixel_data } : 4'd0;
+    assign red   = 1 ? { ~pixel_data, ~pixel_data } : 4'd0;
+    assign green = 1 ? { ~pixel_data, ~pixel_data } : 4'd0;
+    assign blue  = 1 ? { ~pixel_data, ~pixel_data } : 4'd0;
     
     always_ff @(posedge vclock) begin
         hs <= hsync;
@@ -237,5 +219,44 @@ module vga(input wire vclock_in,
    end
 endmodule
 
+module debounce (input wire reset_in, clock_in, noisy_in,
+                 output logic clean_out);
+   parameter DEBOUNCE_COUNT = 1000000;
+   logic [19:0] count;
+   logic new_input;
+
+   always_ff @(posedge clock_in)
+     if (reset_in) begin 
+        new_input <= noisy_in; 
+        clean_out <= noisy_in; 
+        count <= 0; end
+     else if (noisy_in != new_input) begin new_input<=noisy_in; count <= 0; end
+     else if (count == DEBOUNCE_COUNT) clean_out <= new_input;
+     else count <= count+1;
+
+
+endmodule
 
 `default_nettype wire
+
+module clk_gen(
+    (* gated_clock = "yes" *) input clk_in, 
+    output reg clk_out
+);
+
+    /* Generate a 4.16Mhz Clock by dividing 100Mhz by 12*/
+    logic [5:0] clk_divider = 0;
+
+    initial begin
+        clk_out = 0; 
+    end
+
+    always @(posedge clk_in) begin
+        if (clk_divider == 11) begin
+            clk_divider <= 0;
+            clk_out <= ~clk_out;
+        end else begin
+            clk_divider <= clk_divider + 1; 
+        end
+    end
+endmodule

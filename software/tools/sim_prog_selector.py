@@ -62,10 +62,12 @@ def select_prog(prog_file):
     write_to_file(sim_mem_path, prog_coe)
 
 if __name__ == "__main__": 
-    out = make_coe('F:\\Projects\\GameMan\\software\\tools\\vram.bin')
-    with open('F:\\Projects\\GameMan\\software\\tools\\vram.coe', 'w') as f:
-        f.write(out)
-    quit()
+    _make_coe = False
+    if _make_coe: 
+        out = make_coe('F:\\Projects\\GameMan\\software\\tools\\oam.bin')
+        with open('F:\\Projects\\GameMan\\software\\tools\\oam.coe', 'w') as f:
+            f.write(out)
+        quit()
 
     print('Programs found at', prog_path)
 

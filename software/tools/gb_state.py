@@ -232,13 +232,13 @@ class GameBoyState():
 if __name__ == "__main__": 
     gb1 = GameBoyState()
     #gb1.load_from_sna('C:\\Users\\Ahmad\\Desktop\\Ape_Gang_FPGA_Project\\software\\tools\\tetris.sna')
-    gb1.load_from_sna('F:\\Projects\\GameMan\\software\\tools\\nintendo.sna')
+    gb1.load_from_sna('F:\\Projects\\GameMan\\software\\emu\\tetris.sna')
     print(gb1.stringify_mem('oam'))
     #print(gb1.stringify_mem('vram'))
-    print(gb1.vram)
-    p = 'F:\\Projects\\GameMan\\software\\tools\\vram.bin'
+    print(gb1.oam)
+    p = 'F:\\Projects\\GameMan\\software\\tools\\oam.bin'
     f = open(p, 'wb')
-    f.write(gb1.vram)
+    f.write(gb1.oam)
     f.close()
     print('done')
     #gb2 = GameBoyState()

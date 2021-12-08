@@ -8,7 +8,8 @@ SECTION "Header", ROM0[$00]
 Addr_0007:
 	LD [HL-],A		; $0007
 	BIT 7,H		; $0008
-	JR NZ, Addr_0007	; $000a
+	;JR NZ, Addr_0007	; $000a
+	JR Z, Addr_0007	; $000a
 
 	LD HL,$ff26		; $000c  Setup Audio
 	LD C,$11		; $000f
@@ -26,7 +27,9 @@ Addr_0007:
 
 	LDH [$47],A	; $001f
 
-	LD DE,$0104		; $0021  Convert and load logo data from cart into Video RAM
+	;LD DE,$0104		; $0021  Convert and load logo data from cart into Video RAM
+	LD DE,$00a8		; $0021  Convert and load logo data from cart into Video RAM
+	
 	LD HL,$8010		; $0024
 Addr_0027:
 	LD A,[DE]		; $0027
@@ -65,13 +68,13 @@ Addr_004A:
 
 Addr_0055:
 	LD H,A		; $0055  Initialize scroll count, H=0
-	LD A,$64		; $0056
+	LD A,$24		; $0056
 	LD D,A		; $0058  set loop count, D=$64
 	LDH [$42],A	; $0059  Set vertical scroll register
 	LD A,$91		; $005b
 	LDH [$40],A	; $005d  Turn on LCD, showing Background
-	;INC B			; $005f  Set B=1
-	db $fd
+	INC B			; $005f  Set B=1
+	;db $fd
 Addr_0060:
 	LD E,$02		; $0060
 Addr_0062:
@@ -118,12 +121,12 @@ Addr_0086:
 	LD C,A		; $0095  "Double up" all the bits of the graphics data
 	LD B,$04		; $0096     and store in Video RAM
 Addr_0098:
-	;PUSH BC		; $0098
+	PUSH BC		; $0098
 	RL C			; $0099
 	RLA			; $009b
-	;POP BC		; $009c
-	;RL C			; $009d
-	;RLA			; $009f
+	POP BC		; $009c
+	RL C			; $009d
+	RLA			; $009f
 	DEC B			; $00a0
 	JR NZ, Addr_0098	; $00a1
 	LD [HL+],A		; $00a3
@@ -145,14 +148,15 @@ Addr_00D8:
 	; ===== Nintendo logo comparison routine =====
 
 Addr_00E0:	
-	LD HL,$0104		; $00e0	; point HL to Nintendo logo in cart
+	;LD HL,$0104		; $00e0	; point HL to Nintendo logo in cart
+	LD HL,$00a8		; $00e0	; point HL to Nintendo logo in cart
 	LD DE,$00a8		; $00e3	; point DE to Nintendo logo in DMG rom
 
 Addr_00E6:
 	LD A,[DE]		; $00e6
 	INC DE		; $00e7
 	CP [HL]		; $00e8	;compare logo data in cart to DMG rom
-	JR NZ,$fe		; $00e9	;if not a match, lock up here
+	;JR NZ,$fe		; $00e9	;if not a match, lock up here
 	INC HL		; $00eb
 	LD A,L		; $00ec
 	CP $34		; $00ed	;do this for $30 bytes
@@ -166,8 +170,10 @@ Addr_00F4:
 	DEC B			; $00f6
 	JR NZ, Addr_00F4	; $00f7
 	ADD [HL]		; $00f9
-	JR NZ,$fe		; $00fa	; if $19 + bytes from $0134-$014D  don't add to $00
+	;JR NZ,$fe		; $00fa	; if $19 + bytes from $0134-$014D  don't add to $00
 						;  ... lock up
 
-	LD A,$01		; $00fc
-	LDH [$50],A	; $00fe	;turn off DMG rom
+	;LD A,$01		; $00fc
+	;LDH [$50],A	; $00fe	;turn off DMG rom
+
+	db $fd

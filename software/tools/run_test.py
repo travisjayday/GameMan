@@ -142,7 +142,7 @@ if __name__ == "__main__":
     uts = []
     for prog in os.listdir(prog_dir):
         if not testall: 
-            if prog.startswith('prog_apu_envelope_2'):
+            if prog.startswith('ut_bootrom'):
                 uts.append(prog_dir + prog)
         else:
             if prog.startswith('ut_'):
@@ -153,7 +153,7 @@ if __name__ == "__main__":
     for test_dir in uts: 
         prog_file = test_dir + os.sep + 'out.gb' 
         assemble_program(prog_file)
-        only_select =False 
+        only_select = False
         if not only_select:
             gb_emu = run_emu_as_bootrom(prog_file, debug=True)
         gb_uut = run_xsim_program(prog_file, only_select=only_select)

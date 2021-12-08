@@ -91,16 +91,30 @@
             /* If PPU is accessingthis interface, it is the ultimate winner */          \
             if (PPU_ACCESSING & `EN_PPU_VRAM_IF) begin                                  \
                 /* PPU accessing VRAM */                                                \
-                `WINS_BUS_CONFLICT_3_CONTENDORS(DST_IF,                                 \
-                    ppu_vram_req, mapped_ppu_vram_addr, /* winner is PPU VRAM */        \
-                    cpu_req, dma_req                    /* losers */                    \
-                );                                                                      \
+                if (en_cpu_ifs & `EN_VRAM_IF) begin                                     \
+                    `WINS_BUS_CONFLICT_2_CONTENDORS(DST_IF,                             \
+                        ppu_vram_req, mapped_ppu_vram_addr, /* winner is PPU VRAM */    \
+                        cpu_req /* losers */                                            \
+                    );                                                                  \
+                end else begin                                                          \
+                    $display("PPU Reading VRAM @ addr: 0x%x", mapped_ppu_vram_addr);\
+                    `WINS_BUS_CONFLICT_NO_CONTENDORS(DST_IF,                            \
+                        ppu_vram_req, mapped_ppu_vram_addr    /* winner & winning address */          \
+                    );                                                                  \
+                end                                                                     \
             end else begin                                                              \
                 /* PPU accessing OAM */                                                 \
-                `WINS_BUS_CONFLICT_3_CONTENDORS(DST_IF,                                 \
-                    ppu_oam_req, mapped_ppu_oam_addr,   /* winner is PPU OAM */         \
-                    cpu_req, dma_req                    /* losers */                    \
-                );                                                                      \
+                if (en_cpu_ifs & `EN_OAM_IF) begin                                      \
+                    `WINS_BUS_CONFLICT_2_CONTENDORS(DST_IF,                             \
+                        ppu_oam_req, mapped_ppu_oam_addr,   /* winner is PPU OAM */     \
+                        cpu_req                     /* losers */                        \
+                    );                                                                  \
+                end else begin                                                          \
+                    $display("PPU Reading OAM @ addr: 0x%x", mapped_ppu_oam_addr);\
+                    `WINS_BUS_CONFLICT_NO_CONTENDORS(DST_IF,                            \
+                        ppu_oam_req, mapped_ppu_oam_addr    /* winner & winning address */          \
+                    );                                                                  \
+                end                                                                     \
             end                                                                         \
         end                                                                             \
     end
@@ -161,6 +175,7 @@ module mmu_m(
         /* PPU ACCESS */
         if /* VRAM      (0x8000 - 0x9FFF) */
         (`PPU_ADDR_IN_RNG(ppu_vram_req, 16'h8000, 16'hA000)) begin
+            $display("Enabling VRAM IF bec of address");
             en_ppu_ifs |= `EN_PPU_VRAM_IF;
             mapped_ppu_vram_addr = ppu_vram_req.addr_select - 16'h8000;
         end
@@ -244,6 +259,7 @@ module mmu_m(
         if (en_ifs & `EN_HRAM_IF) `MAP_INTERFACE(`EN_HRAM_IF,  hram_if,        2'b00) else `UNMAP_INTERFACE(hram_if)
         if (en_ifs & `EN_DMA_IF)  `MAP_INTERFACE(`EN_DMA_IF,   mmio_dma_if,    2'b00) else `UNMAP_INTERFACE(mmio_dma_if)
         if (en_ifs & `EN_APU_IF)  `MAP_INTERFACE(`EN_APU_IF,   mmio_apu_if,    2'b00) else `UNMAP_INTERFACE(mmio_apu_if)
+        if (en_ifs & `EN_PPU_IF)  `MAP_INTERFACE(`EN_PPU_IF,   mmio_ppu_if,    2'b00) else `UNMAP_INTERFACE(mmio_ppu_if)
         if (en_ifs & `EN_JOYPAD_IF)`MAP_INTERFACE(`EN_JOYPAD_IF,mmio_joypad_if,2'b00) else `UNMAP_INTERFACE(mmio_joypad_if)
         if ((en_ifs & `EN_VRAM_IF) || (en_ppu_ifs & `EN_PPU_VRAM_IF)) 
             `MAP_INTERFACE(`EN_VRAM_IF, vram_if, en_ppu_ifs)                          else `UNMAP_INTERFACE(vram_if)

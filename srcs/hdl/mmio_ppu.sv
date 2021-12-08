@@ -40,7 +40,7 @@ module mmio_ppu_m(
     logic vram_rd, vram_wr, oam_wr, oam_rd;
 
     ppu _ppu(
-        .clk_in(clk), .rst_in(rst), .start_in(start_in),
+        .clk(clk), .rst(rst), .start(start_in),
         //LCD Logic
         .pixel_out(pixel_out),
         //SCREEN BUFFER
@@ -53,7 +53,7 @@ module mmio_ppu_m(
         .oam_dout(ppu_oam_req.read_out), .oam_a(ppu_oam_req.addr_select), .oam_din(ppu_oam_req.write_value),
         .oam_wr(oam_wr), 
         //CPU R/W REGISTERS 
-        .mmio_dout(req.read_out), .mmio_a(req.addr_select), .mmio_din(req.write_value), .mmio_rd(!req.write_enable), .mmio_wr(req.write_enable),
+        .mmio_dout(req.read_out), .mmio_a(req.addr_select), .mmio_din(req.write_value), .mmio_wr(req.write_enable),
         .stat_interrupt(statline_interrupt),
         .vblank_interrupt(vblank_interrupt)
         );

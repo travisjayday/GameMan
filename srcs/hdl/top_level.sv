@@ -1,17 +1,23 @@
+`default_nettype none
+
 module top_level import cpu_defs::*;(
     input wire clk_100mhz, 
     input wire[15:0] sw,
     output logic[15:0] led,
     output logic aud_pwm,
     output logic aud_sd,
-    input wire [7:0] je
+    input wire [7:0] je,
+    output logic[3:0] vga_r,
+    output logic[3:0] vga_b,
+    output logic[3:0] vga_g,
+    output logic vga_hs,
+    output logic vga_vs
     );
     logic rst;
     assign rst = sw[15];
 
     reg_file_s regs_out;
-    assign led = {regs_out.PC[7:0], 7'b0, pwm_val};
-
+  
     logic clk_4mhz; 
     clk_gen _clk_gen(clk_100mhz, clk_4mhz);
 
@@ -58,6 +64,9 @@ module top_level import cpu_defs::*;(
     mmio_apu_m mmio_apu(clk_4mhz, rst, mmio_apu_if, sys_counter, pwm_val);
     assign aud_pwm = pwm_val ? 1'bZ : 1'b0; 
     assign aud_sd = 1;
+    
+    //DEBUG
+    assign led = {regs_out.PC[7:0], 7'b0, pwm_val};
 
     // 0xFF00 - Joypad 
     mem_if mmio_joypad_if();
@@ -68,20 +77,46 @@ module top_level import cpu_defs::*;(
     mem_if ppu_oam_if();    // Busmaster 2
     mem_if ppu_vram_if();   // Busmaster 3
     logic [1:0] pixel_out;
-    logic [14:0] lcd_addr;
-    logic lcd_write;
+    logic [15:0] lcd_addr;
+    logic lcd_wr;
+    logic vclock;
+    logic [14:0] lcd_addrb;
+    logic [1:0] pixel_to_vga;
     mmio_ppu_m the_ppu(
         .clk(clk_4mhz),
         .rst(rst),
         .req(mmio_ppu_if),
         .ppu_oam_req(ppu_oam_if),
         .ppu_vram_req(ppu_vram_if),
-        .lcd_addr(lcd_addr),
-        .lcd_write(lcd_write),
+        .lcd_a(lcd_addr),
+        .lcd_wr(lcd_wr),
         .vblank_interrupt(interrupts.vblank),
         .statline_interrupt(interrupts.lcd_stat)
     );
-
+    //LCD AKA SCREEN BUFFER
+    ram_lcd lcd(            
+        .addra(lcd_addr[14:0]),
+        .clka(clk_4mhz),
+        .dina(pixel_out),
+        .wea(lcd_wr),
+        .addrb(lcd_addrb),
+        .clkb(vclock),
+        .doutb(pixel_to_vga)
+    );
+    //VGA
+    vga_master vga(
+        .clk_100mhz(clk_100mhz),
+        .rst(rst),
+        .vga_r(vga_r),
+        .vga_b(vga_b),
+        .vga_g(vga_g),
+        .vga_hs(vga_hs),
+        .vga_vs(vga_vs),
+        .addrb(lcd_addrb),
+        .clkb(vclock),
+        .doutb(pixel_to_vga)
+        
+        );
     // DMA
     mem_if dma_mmu_if();    // Busmaster 1
     mem_if mmio_dma_if();
@@ -190,7 +225,7 @@ module top_level import cpu_defs::*;(
     endtask 
 
 endmodule
-
+`default_nettype wire
 module clk_gen(
     (* gated_clock = "yes" *) input clk_in, 
     output reg clk_out
