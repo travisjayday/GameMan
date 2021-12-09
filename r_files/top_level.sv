@@ -1,69 +1,215 @@
-`timescale 1ns / 1ps
-`default_nettype none
-
 module top_level import cpu_defs::*;(
     input wire clk_100mhz, 
-    input wire [7:0] je,
-    input wire [15:0] sw,
-    output logic [7:0] led
+    input wire[15:0] sw,
+    output logic[15:0] led,
+    
+    inout            [7:0]       ja,              // ja : d[7:0]
+    output logic     [7:0]       jb,              // jb : a[7:0]
+    output logic     [7:0]       jc,              // 0:reset, 1:cs, 2:rd, 3:wr, 4:clk. 5-7:nc
+    output logic     [7:0]       jd,              // jd : a[15:8]
+    input wire       [7:0]       je,               // controls
+
+    output logic     [6:0]       c,    
+    output logic     [7:0]       an
+    );
+    logic rst;
+    assign rst = sw[15];
+
+    reg_file_s regs_out;
+    assign led = ja;
+
+    logic clk_4mhz; 
+    clk_gen _clk_gen(clk_100mhz, clk_4mhz);
+
+    // Contains:    Cartridge ROM
+    // Size:        32KB 
+    mem_if rom_if(); 
+    //bram_32k_rom_m rom(clk_4mhz, rom_if);
+    
+    cart_if cart(
+                    .clk(clk_4mhz),
+                    .rst(rst),
+                    .rom_if(rom_if),
+                    
+                    .clk_out(jc[4]),
+                    .n_rst_out(jc[0]),
+                    .n_write_enable_out(jc[3]),
+                    .n_read_enable_out(jc[2]),
+                    .n_cs_out(jc[1]),
+                    .addr_out({jd,jb}),
+                    .data_out(ja)
+                    );
+                    
+    seven_seg_controller seven_seg_controller1 (.clk_in(clk_100mhz),.rst_in(rst),.val_in({16'hb00b,regs_out.PC}),.cat_out(c),.an_out(an));
+                    
+
+    // Contains: VRAM   EXT RAM     WRAM    OAM     
+    // Size:     8KB    8KB         4KB     160B    
+    mem_if mram_if(); 
+    bram_main_ram_m mram (clk_4mhz, mram_if);
+
+    // HRAM 
+    // Size: 127B
+    mem_if hram_if(); 
+    bram_hram_m hram (clk_4mhz, hram_if);
+
+    mem_if mmio_dma_if();
+    mem_if dma_req();
+    mmio_dma_m dma(clk_4mhz, rst, mmio_dma_if, dma_req);
+
+    // Interrupt Handler Module 
+    // Sets IF flag for CPU. Handles writes and reads to IF and IE cpu.regs. 
+    // 0xFFFF - IE (R/W)
+    // 0xFF05 - IF (R/W)
+    interrupt_lines_s interrupts; 
+    // For now, pull other interrupts low
+    assign interrupts.vblank = 0;
+    assign interrupts.lcd_stat = 0;
+    assign interrupts.joypad = 0; 
+    mem_if mmio_interrupts_if(); 
+    mmio_interrupts_m mmio_interrupts(clk_4mhz, rst, mmio_interrupts_if, interrupts);
+
+    // 0xFF04 - Divider Regiser (R/W)
+    mem_if mmio_timer_if();
+    mmio_timer_m mmio_timer(clk_4mhz, rst, mmio_timer_if, interrupts.timer);
+
+    // Memory Mapping Unit
+    mem_if mmu_if(); 
+    mmu_m mmu(
+        .clk(clk_4mhz), 
+        .rst(rst), 
+        .req(mmu_if), 
+        .dma_req(dma_req),
+        .rom_if(rom_if), 
+        .mram_if(mram_if),
+        .hram_if(hram_if),
+        .mmio_timer_if(mmio_timer_if),
+        .mmio_ints_if(mmio_interrupts_if)
     );
 
-
-mem_if con_if();
-
-controller con_on_je (
-    .clk(clk_100mhz),
-    .je(je),
-    .con_if(con_if)
+    // CPU 
+    logic cpu_died;
+    cpu_m cpu(
+        .clk(clk_4mhz), 
+        .rst(rst), 
+        .mmu(mmu_if), 
+        .mmio_reg_IF(mmio_interrupts.IF),
+        .mmio_reg_IE(mmio_interrupts.IE), 
+        .cpu_died(cpu_died), 
+        .regs_out(regs_out)
     );
-    
-    assign con_if.write_value = sw[7:0] ;
-    assign con_if.addr_select = 16'hFF00;
-    assign con_if.write_enable = sw[8];
-    assign led = con_if.read_out;
-    
-    
+
+    initial begin
+        $timeformat(-9, 2, " ns", 20);
+    end
+
+    /* CPU Watchdog */
+    logic[2:0] zombie_cnt;
+    always_ff @(posedge clk_4mhz) begin
+        if (rst) zombie_cnt <= 0;
+        else if (cpu_died && zombie_cnt == 2) begin
+            $display("CPU Died!");
+`ifndef SYNTHESIS
+            dump_system_state();
+`endif
+            $finish;
+        end
+        else if (cpu_died) zombie_cnt <= zombie_cnt + 1; 
+    end
+
+    task dump_system_state();
+        automatic int fd;
+        automatic int tmp;
+        automatic string mem;
+        automatic int cols_per_line = 16;
+        automatic int num_lines = 100; 
+        automatic int num_bytes = 100; 
+        string sections[int] = '{0: "VRAM", 1: "ERAM", 2: "WRAM", 3: "_OAM", 4: "HRAM"};
+    begin
+        fd = $fopen("simdump.hex", "w");
+
+        $fwrite(fd, "SECTION REGS\n");
+        $fwrite(fd, "AF   BC   DE   HL   SP   PC\n");
+        $fwrite(fd, "%04x %04x %04x %04x %04x %04x\n", 
+            cpu.regs.AF, cpu.regs.BC, cpu.regs.DE, cpu.regs.HL, cpu.regs.SP, cpu.regs.PC);
+
+        $fwrite(fd, "\nSECTION MMIO\n");
+        $fwrite(fd, "DIV   TAC   TMA   TIMA\n");
+        tmp = mmio_timer.sys_counter;
+        $fwrite(fd, "%02x    %02x    %02x   %02x\n", 
+            (tmp >> 8) & 8'hff, mmio_timer.tac, mmio_timer.tma, mmio_timer.tima);
+
+        $fwrite(fd, "\nSECTION SYS\n");
+        $fwrite(fd, "totalclks    divider\n");
+        tmp = mmio_timer.sys_counter;
+        $fwrite(fd, "%08x     %08x\n", cpu.totalclks, tmp);
+
+        $fwrite(fd, "\nSECTION MEM\n");
+        // in order for the below to compile you have to 
+        // add `-L blk_mem_gen_v8_4_4_inst` to xevlog.exe
+
+        // VRAM, EXTRAM, WRAM, OAM, HRAM
+        num_bytes = 'h2000 + 'h2000 + 'h1000 + 'h1000 + 128 + 160;
+        num_lines = num_bytes / cols_per_line;
+        for (int i = 0; i < num_lines; i++) begin
+            automatic int addr = 'h8000 + i * cols_per_line; 
+            automatic int section = 0;
+            if (addr >= 'h8000 && addr < 'hA000) section = 0; 
+            if (addr >= 'hA000 && addr < 'hC000) section = 1; 
+            if (addr >= 'hC000 && addr < 'hE000) section = 2; 
+            if (addr >= 'hE000 && addr < 'hE0A0) begin
+                section = 3; addr = addr + 'h1E00;
+            end
+            if (addr >= 'hE0A0 && addr < 'hE120) begin 
+                section = 4; addr = addr + 'h1EE0;
+            end
+
+            $fwrite(fd, "%s:%04x  ", sections[section], addr);
+            for (int j = 0; j < cols_per_line; j++) begin
+                if (addr > 16'hFF00) begin
+                    $fwrite(fd, "%02x ", 
+                        hram.unit.inst.\native_mem_module.blk_mem_gen_v8_4_4_inst .memory[cols_per_line * (i-num_lines + 8) + j]);
+                end else begin
+                    $fwrite(fd, "%02x ", 
+                        mram.unit.inst.\native_mem_module.blk_mem_gen_v8_4_4_inst .memory[cols_per_line * i + j]);
+                end
+            end
+            $fwrite(fd, "\n");
+        end
+
+        num_bytes = 'h8000;
+        num_lines = num_bytes / cols_per_line;
+        for (int i = 0; i < num_lines; i++) begin
+            $fwrite(fd, "ROM0:%04x  ", i * cols_per_line);
+            for (int j = 0; j < cols_per_line; j++) 
+                $fwrite(fd, "%02x ", 
+                    rom.unit.inst.\native_mem_module.blk_mem_gen_v8_4_4_inst .memory[cols_per_line * i + j]);
+            $fwrite(fd, "\n");
+        end
+
+    end
+    endtask 
+
 endmodule
 
+module clk_gen #(parameter DIVIDER = 12)(
+    (* gated_clock = "yes" *) input clk_in, 
+    output reg clk_out
+);
+        
+    /* Generate a 4.16Mhz Clock by dividing 100Mhz by DIVIDER*/
+    logic [$clog2(DIVIDER)-1:0] clk_divider = 0;
 
-module controller(
-    input wire clk,
-    input wire [7:0] je,
-    mem_if.slave con_if
-    ); 
-    
-    logic [3:0] d_pad;
-    logic [3:0] face;
-    logic [3:0] d_pad_and_face;
-    logic [1:0] sel;
-    
-    assign d_pad = je[3:0]; // right, left, up, down
-    assign face = je[7:4];  // a, b, select, start
-    assign d_pad_and_face = d_pad & face;
-    
-    
-        
-    always_ff @(posedge clk) begin 
-        if (con_if.addr_select == 16'hFF00) begin 
-        
-            if (con_if.write_enable) begin
-            
-                sel <= con_if.write_value[5:4];
-                
-            end else begin 
-                
-                con_if.read_out[7:4] <= { 2'b11 , sel };
-                
-                case(sel)
-                    2'b11: con_if.read_out[3:0] <= 4'b1111;                      
-                    2'b10: con_if.read_out[3:0] <= d_pad;                      
-                    2'b01: con_if.read_out[3:0] <= face;
-                    2'b00: con_if.read_out[3:0] <= d_pad_and_face;
-                endcase
-                
-            end
+    initial begin
+        clk_out = 0; 
+    end
+
+    always @(posedge clk_in) begin
+        if (clk_divider == DIVIDER-1) begin
+            clk_divider <= 0;
+            clk_out <= ~clk_out;
+        end else begin
+            clk_divider <= clk_divider + 1; 
         end
     end
 endmodule
-
-`default_nettype wire
