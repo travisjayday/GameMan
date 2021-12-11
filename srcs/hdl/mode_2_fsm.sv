@@ -270,14 +270,6 @@ module fetch_oam_x (
             rd_index <= 0;
             sprite_queue_out <= '{default:'0}; 
             done_delay <= 0;
-<<<<<<< Updated upstream
-            state <= read; 
-            valid <= 1;
-            prev_valid_rd <= 0;
-           // oam_a <= sprite_queue_in[0][47:32] + 16'h1;   
-            valid_delay <= 0;
-            valid_rd <= 0;
-=======
             
             valid <= 1;
             prev_valid_rd <= 0;
@@ -291,20 +283,16 @@ module fetch_oam_x (
             end else begin 
                 state <= read; 
             end 
->>>>>>> Stashed changes
          end else begin 
             valid_delay <= valid;
             valid_rd <= valid_delay;
             prev_valid_rd <= valid_rd;
-<<<<<<< Updated upstream
-=======
             if (done_delay) begin
                     done_delay <= 0;
                     index <= 0; 
                     rd_index <= 0;
                     state <= done;
             end 
->>>>>>> Stashed changes
             if(state == read) begin       
                 if(valid_delay) begin
                     sprite_queue_out[rd_index] <= {sprite_queue_in[rd_index][47:24], oam_dout, 8'b0, 8'b0};                   
@@ -313,15 +301,6 @@ module fetch_oam_x (
                 if (valid_rd && !prev_valid_rd) begin
                         done_delay <= 1;
                 end   
-<<<<<<< Updated upstream
-                if (done_delay) begin
-                    done_delay <= 0;
-                    index <= 0; 
-                    rd_index <= 0;
-                    state <= done;
-                end 
-=======
->>>>>>> Stashed changes
                 if(oam_a >= OAM_START && oam_a < OAM_END) begin
                     //oam_a <= sprite_queue_in[index][47:32] + 16'h1;      
                     if (index < SPRITE_COUNT) begin 
@@ -351,10 +330,7 @@ module fetch_oam_tile_index (
     parameter OAM_END = 16'hFE9F;
     parameter SPRITE_COUNT = 10;
     
-<<<<<<< Updated upstream
-=======
         
->>>>>>> Stashed changes
     logic valid, valid_delay, valid_rd, prev_valid_rd;
     logic [3:0] index, rd_index; 
     logic [15:0] next_addr;
@@ -381,14 +357,6 @@ module fetch_oam_tile_index (
             rd_index <= 0;
             sprite_queue_out <= '{default:'0}; 
             done_delay <= 0;
-<<<<<<< Updated upstream
-            state <= read; 
-            valid <= 1;
-            prev_valid_rd <= 0;
-           // oam_a <= sprite_queue_in[0][47:32] + 16'h1;   
-            valid_delay <= 0;
-            valid_rd <= 0;
-=======
             
             valid <= 1;
             prev_valid_rd <= 0;
@@ -402,20 +370,16 @@ module fetch_oam_tile_index (
             end else begin 
                 state <= read; 
             end 
->>>>>>> Stashed changes
          end else begin 
             valid_delay <= valid;
             valid_rd <= valid_delay;
             prev_valid_rd <= valid_rd;
-<<<<<<< Updated upstream
-=======
             if (done_delay) begin
                     done_delay <= 0;
                     index <= 0; 
                     rd_index <= 0;
                     state <= done;
             end 
->>>>>>> Stashed changes
             if(state == read) begin       
                 if(valid_delay) begin
                     sprite_queue_out[rd_index] <= {sprite_queue_in[rd_index][47:16], oam_dout, 8'b0};                   
@@ -424,15 +388,6 @@ module fetch_oam_tile_index (
                 if (valid_rd && !prev_valid_rd) begin
                         done_delay <= 1;
                 end   
-<<<<<<< Updated upstream
-                if (done_delay) begin
-                    done_delay <= 0;
-                    index <= 0; 
-                    rd_index <= 0;
-                    state <= done;
-                end 
-=======
->>>>>>> Stashed changes
                 if(oam_a >= OAM_START && oam_a < OAM_END) begin
                     //oam_a <= sprite_queue_in[index][47:32] + 16'h1;      
                     if (index < SPRITE_COUNT) begin 
@@ -444,10 +399,6 @@ module fetch_oam_tile_index (
             end           
          end 
     end
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 endmodule 
 
 module fetch_oam_flags (
@@ -465,10 +416,7 @@ module fetch_oam_flags (
     parameter OAM_END = 16'hFE9F;
     parameter SPRITE_COUNT = 10;
     
-<<<<<<< Updated upstream
-=======
     
->>>>>>> Stashed changes
     logic valid, valid_delay, valid_rd, prev_valid_rd;
     logic [3:0] index, rd_index; 
     logic [15:0] next_addr;
@@ -495,14 +443,6 @@ module fetch_oam_flags (
             rd_index <= 0;
             sprite_queue_out <= '{default:'0}; 
             done_delay <= 0;
-<<<<<<< Updated upstream
-            state <= read; 
-            valid <= 1;
-            prev_valid_rd <= 0;
-           // oam_a <= sprite_queue_in[0][47:32] + 16'h1;   
-            valid_delay <= 0;
-            valid_rd <= 0;
-=======
             
             valid <= 1;
             prev_valid_rd <= 0;
@@ -516,20 +456,16 @@ module fetch_oam_flags (
             end else begin 
                 state <= read; 
             end 
->>>>>>> Stashed changes
          end else begin 
             valid_delay <= valid;
             valid_rd <= valid_delay;
             prev_valid_rd <= valid_rd;
-<<<<<<< Updated upstream
-=======
             if (done_delay) begin
                     done_delay <= 0;
                     index <= 0; 
                     rd_index <= 0;
                     state <= done;
             end 
->>>>>>> Stashed changes
             if(state == read) begin       
                 if(valid_delay) begin
                     sprite_queue_out[rd_index] <= {sprite_queue_in[rd_index][47:8], oam_dout};                   
@@ -538,15 +474,6 @@ module fetch_oam_flags (
                 if (valid_rd && !prev_valid_rd) begin
                         done_delay <= 1;
                 end   
-<<<<<<< Updated upstream
-                if (done_delay) begin
-                    done_delay <= 0;
-                    index <= 0; 
-                    rd_index <= 0;
-                    state <= done;
-                end 
-=======
->>>>>>> Stashed changes
                 if(oam_a >= OAM_START && oam_a < OAM_END) begin
                     //oam_a <= sprite_queue_in[index][47:32] + 16'h1;      
                     if (index < SPRITE_COUNT) begin 
@@ -558,10 +485,6 @@ module fetch_oam_flags (
             end           
          end 
     end
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 endmodule
 
 `default_nettype wire
