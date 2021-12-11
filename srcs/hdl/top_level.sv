@@ -24,7 +24,7 @@ module top_level import cpu_defs::*;(
     reg_file_s regs_out;
   
     logic clk_4mhz; 
-    clk_gen _clk_gen(clk_100mhz, clk_4mhz);
+    clk_wiz_1 _25mhz_to_4mhz(vclock, clk_4mhz);  //TODO: create a clock wizard ip named clk_wiz_1 that tkes 25.17401 MHz and outputs 4.69MHz. disable the locked and reset i/o
 
     mem_if ppu_oam_if();    // Busmaster 2
     mem_if ppu_vram_if();   // Busmaster 3
