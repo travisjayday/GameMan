@@ -153,7 +153,7 @@ if __name__ == "__main__":
     for test_dir in uts: 
         prog_file = test_dir + os.sep + 'out.gb' 
         assemble_program(prog_file)
-        only_select = False
+        only_select = False 
         if not only_select:
             gb_emu = run_emu_as_bootrom(prog_file, debug=True)
         gb_uut = run_xsim_program(prog_file, only_select=only_select)

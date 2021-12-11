@@ -18,115 +18,20 @@
 // Additional Comments:
 // 
 //////////////////////////////////////////////////////////////////////////////////
-
-`define EN_ROM_IF           12'b0000_0000_0001
-`define EN_WRAM_IF          12'b0000_0000_0010
-`define EN_OAM_IF           12'b0000_0000_0100
-`define EN_VRAM_IF          12'b0000_0000_1000
-`define EN_TIMER_IF         12'b0000_0001_0000
-`define EN_INTS_IF          12'b0000_0010_0000
-`define EN_HRAM_IF          12'b0000_0100_0000
-`define EN_DMA_IF           12'b0000_1000_0000
-`define EN_APU_IF           12'b0001_0000_0000
-`define EN_PPU_IF           12'b0010_0000_0000
-`define EN_JOYPAD_IF        12'b0100_0000_0000
-
-`define EN_PPU_OAM_IF       2'b01
-`define EN_PPU_VRAM_IF      2'b10
-
 `define ADDR_IN_RNG(LO, HI) \
     (cpu_req.addr_select >= LO && cpu_req.addr_select < HI)
 
-`define DMA_ADDR_IN_RNG(LO, HI) \
-    (dma_req.addr_select >= LO && dma_req.addr_select < HI)
+`define MAP_INTERFACE(DST_IF, BASE_OFFSET, START_OFFSET)        \
+    DST_IF.addr_select  = cpu_req.addr_select - BASE_OFFSET + START_OFFSET;     \
+    DST_IF.write_value  = cpu_req.write_value;                                  \
+    cpu_req.read_out        = DST_IF.read_out;                                  \
+    DST_IF.write_enable = cpu_req.write_enable; 
 
-`define PPU_ADDR_IN_RNG(req, LO, HI) \
-    (req.addr_select >= LO && req.addr_select < HI)
 
-/* Handle Bus arbitration between busmasters (CPU, DMA, PPU) */
-
-`define WINS_BUS_CONFLICT_3_CONTENDORS(DST_IF, winner_req, mapped_winner_addr, loser1_req, loser2_req)\
-    DST_IF.addr_select  = mapped_winner_addr;                                           \
-    DST_IF.write_value  = winner_req.write_value;                                       \
-    DST_IF.write_enable = winner_req.write_enable;                                      \
-    winner_req.read_out = DST_IF.read_out;                                              \
-    loser1_req.read_out = DST_IF.read_out;                                              \
-    loser2_req.read_out = DST_IF.read_out;                                          
-
-`define WINS_BUS_CONFLICT_2_CONTENDORS(DST_IF, winner_req, mapped_winner_addr, loser_req)\
-    DST_IF.addr_select  = mapped_winner_addr;                                           \
-    DST_IF.write_value  = winner_req.write_value;                                       \
-    DST_IF.write_enable = winner_req.write_enable;                                      \
-    winner_req.read_out = DST_IF.read_out;                                              \
-    loser_req.read_out  = DST_IF.read_out;                                          
-
-`define WINS_BUS_CONFLICT_NO_CONTENDORS(DST_IF, winner_req, mapped_winner_addr)         \
-    DST_IF.addr_select  = mapped_winner_addr;                                           \
-    DST_IF.write_value  = winner_req.write_value;                                       \
-    DST_IF.write_enable = winner_req.write_enable;                                      \
-    winner_req.read_out = DST_IF.read_out;                                          
-
-`define MAP_INTERFACE(EN_IF, DST_IF, PPU_ACCESSING)                                     \
-    begin                                                                               \
-        if (PPU_ACCESSING == 2'b00) begin                                               \
-            /* If PPU is not accessing this interface, let CPU and DMA haggle it out */ \
-            if (en_cpu_ifs & en_dma_ifs & EN_IF) begin                                  \
-                /* CPU and DMA both try to access memory. DMA engine wins */            \
-                `WINS_BUS_CONFLICT_2_CONTENDORS(DST_IF,                                 \
-                    dma_req, mapped_dma_addr,   /* winner & winning addresss */         \
-                    cpu_req                     /* loser */                             \
-                );                                                                      \
-            end else if (en_dma_ifs & EN_IF) begin                                      \
-                /* DMA grabs the bus */                                                 \
-                `WINS_BUS_CONFLICT_NO_CONTENDORS(DST_IF,                                \
-                    dma_req, mapped_dma_addr   /* winner & winning address */           \
-                );                                                                      \
-            end else begin                                                              \
-                /* CPU grabs the bus */                                                 \
-                `WINS_BUS_CONFLICT_NO_CONTENDORS(DST_IF,                                \
-                    cpu_req, mapped_cpu_addr    /* winner & winning address */          \
-                );                                                                      \
-            end                                                                         \
-        end else begin                                                                  \
-            /* If PPU is accessingthis interface, it is the ultimate winner */          \
-            if (PPU_ACCESSING & `EN_PPU_VRAM_IF) begin                                  \
-                /* PPU accessing VRAM */                                                \
-                if (en_cpu_ifs & `EN_VRAM_IF) begin                                     \
-                    `WINS_BUS_CONFLICT_2_CONTENDORS(DST_IF,                             \
-                        ppu_vram_req, mapped_ppu_vram_addr, /* winner is PPU VRAM */    \
-                        cpu_req /* losers */                                            \
-                    );                                                                  \
-                end else begin                                                          \
-                    $display("PPU Reading VRAM @ addr: 0x%x", mapped_ppu_vram_addr);\
-                    `WINS_BUS_CONFLICT_NO_CONTENDORS(DST_IF,                            \
-                        ppu_vram_req, mapped_ppu_vram_addr    /* winner & winning address */          \
-                    );                                                                  \
-                end                                                                     \
-            end else begin                                                              \
-                /* PPU accessing OAM */                                                 \
-                if (en_cpu_ifs & `EN_OAM_IF) begin                                      \
-                    `WINS_BUS_CONFLICT_2_CONTENDORS(DST_IF,                             \
-                        ppu_oam_req, mapped_ppu_oam_addr,   /* winner is PPU OAM */     \
-                        cpu_req                     /* losers */                        \
-                    );                                                                  \
-                end else begin                                                          \
-                    $display("PPU Reading OAM @ addr: 0x%x", mapped_ppu_oam_addr);\
-                    `WINS_BUS_CONFLICT_NO_CONTENDORS(DST_IF,                            \
-                        ppu_oam_req, mapped_ppu_oam_addr    /* winner & winning address */          \
-                    );                                                                  \
-                end                                                                     \
-            end                                                                         \
-        end                                                                             \
-    end
-
-`define UNMAP_INTERFACE(IF) \
-    begin IF.addr_select = 0; IF.write_value = 0; IF.write_enable = 0;  end
-
-`define EN_INTERFACE(EN_IF, OFFSET) \
-    begin en_cpu_ifs |= EN_IF; mapped_cpu_addr = cpu_req.addr_select + OFFSET; end
-
-`define DMA_EN_INTERFACE(EN_IF, OFFSET) \
-    begin en_dma_ifs |= EN_IF; mapped_dma_addr = dma_req.addr_select + OFFSET; end
+`define UNMAP_INTERFACE(DST_IF)        \
+    DST_IF.addr_select  = 0;     \
+    DST_IF.write_value  = 0;                                  \
+    DST_IF.write_enable = 0; 
 
 
 module mmu_m(
@@ -134,8 +39,6 @@ module mmu_m(
     input wire rst,    
     mem_if.slave cpu_req, 
     mem_if.slave dma_req, 
-    mem_if.slave ppu_oam_req, 
-    mem_if.slave ppu_vram_req, 
     mem_if.master rom_if, 
     mem_if.master wram_if,
     mem_if.master hram_if,
@@ -146,9 +49,126 @@ module mmu_m(
     mem_if.master mmio_timer_if,
     mem_if.master mmio_ints_if,
     mem_if.master mmio_dma_if,
-    mem_if.master mmio_joypad_if
+    mem_if.master mmio_joypad_if,
+    mem_if.master bootrom_if
     );
 
+    always_comb begin
+        if      /* ROM (0x0000 - 0x7FFF) */
+        (`ADDR_IN_RNG(16'h0000, 16'h8000)) 
+        begin
+            `MAP_INTERFACE(rom_if, 16'h0000, 16'h0000); // map to rom_if[0:0x8000]
+            `UNMAP_INTERFACE(vram_if);
+            `UNMAP_INTERFACE(bootrom_if);
+            `UNMAP_INTERFACE(wram_if);
+            `UNMAP_INTERFACE(hram_if);
+            `UNMAP_INTERFACE(oam_if);
+        end 
+        else if /* VRAM, EXTRAM, WRAM (0x8000 - 0xDFFF) */
+        (`ADDR_IN_RNG(16'h8000, 16'hA000)) 
+        begin
+            `MAP_INTERFACE(vram_if, 16'h8000, 16'h0000); // map to mram_if[0:0x6000]
+            `UNMAP_INTERFACE(rom_if);
+            `UNMAP_INTERFACE(bootrom_if);
+            `UNMAP_INTERFACE(wram_if);
+            `UNMAP_INTERFACE(hram_if);
+            `UNMAP_INTERFACE(oam_if);
+        end 
+        else if
+        (`ADDR_IN_RNG(16'hC000, 16'hE000)) 
+        begin
+            `MAP_INTERFACE(wram_if, 16'hC000, 16'h0000); // map to mram_if[0:0x6000]
+            `UNMAP_INTERFACE(rom_if);
+            `UNMAP_INTERFACE(bootrom_if);
+            `UNMAP_INTERFACE(hram_if);
+            `UNMAP_INTERFACE(vram_if);
+            `UNMAP_INTERFACE(oam_if);
+        end 
+        else if /* ECHO RAM (0xE000 - 0xFDFF) */
+        (`ADDR_IN_RNG(16'hE000, 16'hFE00)) 
+        begin
+            `MAP_INTERFACE(bootrom_if, 16'hE000, 16'h0000); // map to rom_if[0:0x8000]
+            `UNMAP_INTERFACE(rom_if);
+            `UNMAP_INTERFACE(wram_if);
+            `UNMAP_INTERFACE(hram_if);
+            `UNMAP_INTERFACE(vram_if);
+            `UNMAP_INTERFACE(oam_if);
+
+            //`MAP_INTERFACE(mram_if, 16'hE000, 16'h4000); // map to mram_if[0:0x6000]
+            //$display("Request to unimplemented echo ram was made...");
+            //$finish;
+        end 
+        else if /* OAM RAM (0xFE00 - 0xFE9F) */
+        (`ADDR_IN_RNG(16'hFE00, 16'hFEA0)) 
+        begin
+            `MAP_INTERFACE(oam_if, 16'hFE00, 16'h0000); // map to mram_if[0x6000:0x60A0]
+            `UNMAP_INTERFACE(rom_if);
+            `UNMAP_INTERFACE(wram_if);
+            `UNMAP_INTERFACE(hram_if);
+            `UNMAP_INTERFACE(vram_if);
+            `UNMAP_INTERFACE(bootrom_if);
+        end 
+        else if /* UNUSABLE RAM (0xFEA0 - 0xFEFF) */
+        (`ADDR_IN_RNG(16'hFEA0, 16'hFF00)) 
+        begin
+            // Not Usable RAM Requets
+            $display("Request to unot usable ram was made...");
+            //$finish;
+        end 
+        else if /* IO REGISTERS (0xFF00 - 0xFF7F) */
+        (`ADDR_IN_RNG(16'hFF00, 16'hFF80) || cpu_req.addr_select == 16'hFFFF) 
+        begin
+            // 0xFF04 - DIV - Divider Register (R/W*)
+            if      (cpu_req.addr_select == 16'hFF04) begin `MAP_INTERFACE(mmio_timer_if, 0, 0) end
+            // 0xFF05 - TIMA - Timer Counter (R/W)
+            else if (cpu_req.addr_select == 16'hFF05) begin `MAP_INTERFACE(mmio_timer_if, 0, 0) end
+            // 0xFF05 - TMA - Timer Modulo (R/W)
+            else if (cpu_req.addr_select == 16'hFF06) begin `MAP_INTERFACE(mmio_timer_if, 0, 0) end
+            // 0xFF07 - TAC - Timer Control (R/W)
+            else if (cpu_req.addr_select == 16'hFF07) begin `MAP_INTERFACE(mmio_timer_if, 0, 0) end
+            // 0xFF0F - IF - Interrupt Flags (R/W)
+            else if (cpu_req.addr_select == 16'hFF0F) begin `MAP_INTERFACE(mmio_ints_if, 0, 0) end
+            // 0xFF46 - DMA - Direct Memory Access (R/W)
+            else if (cpu_req.addr_select == 16'hFF46) begin `MAP_INTERFACE(mmio_dma_if, 0, 0) end
+            // 0xFFFF - IE - Interrupt Enable (R/W)
+            else if (cpu_req.addr_select == 16'hFFFF) begin `MAP_INTERFACE(mmio_ints_if, 0, 0) end
+            // 0xFF00 - Joypad - Buttons (R/W)
+            else if (cpu_req.addr_select == 16'hFF00) begin `MAP_INTERFACE(mmio_joypad_if, 0, 0) end
+            // 0xFF40-0xFF45 - PPU Registers
+            else if (cpu_req.addr_select >= 16'hFF40 && cpu_req.addr_select <= 16'hFF45)
+                begin `MAP_INTERFACE(mmio_ppu_if, 0, 0) end
+            // 0xFF4A-0xFF4b - More PPU Registesr
+            else if (cpu_req.addr_select >= 16'hFF47 && cpu_req.addr_select <= 16'hFF4B)
+                begin `MAP_INTERFACE(mmio_ppu_if, 0, 0) end
+            // 0xFF16-0xFF19 - APU Audio Channel 2
+            else if (cpu_req.addr_select >= 16'hFF16 && cpu_req.addr_select <= 16'hFF19)
+                begin `MAP_INTERFACE(mmio_apu_if, 0, 0) end
+            // 0xFF24-0xFF26 - APU Control
+            else if (cpu_req.addr_select >= 16'hFF24 && cpu_req.addr_select <= 16'hFF26)
+                begin `MAP_INTERFACE(mmio_apu_if, 0, 0) end
+        end
+        else if /* HRAM (0xFF80 - 0xFFFE) */
+        (`ADDR_IN_RNG(16'hFF80, 16'hFFFF))
+        begin
+            `MAP_INTERFACE(hram_if, 16'hFF80, 16'h0000); // map to mram_if[0x60A0:0x6120]
+            `UNMAP_INTERFACE(rom_if);
+            `UNMAP_INTERFACE(wram_if);
+            `UNMAP_INTERFACE(oam_if);
+            `UNMAP_INTERFACE(vram_if);
+            `UNMAP_INTERFACE(bootrom_if);
+        end 
+        else begin
+            $display("MMU Request to 0x%x unkown...", cpu_req.addr_select);
+            `UNMAP_INTERFACE(rom_if);
+            `UNMAP_INTERFACE(wram_if);
+            `UNMAP_INTERFACE(oam_if);
+            `UNMAP_INTERFACE(vram_if);
+            `UNMAP_INTERFACE(bootrom_if);
+            `UNMAP_INTERFACE(hram_if);
+        end
+    end
+
+`ifdef 0
     always_comb begin
         logic [11:0] en_cpu_ifs;
         logic [11:0] en_dma_ifs;
@@ -237,7 +257,7 @@ module mmu_m(
             else if (cpu_req.addr_select >= 16'hFF40 && cpu_req.addr_select <= 16'hFF45)
                 `EN_INTERFACE(`EN_PPU_IF, 0)
             // 0xFF4A-0xFF4b - More PPU Registesr
-            else if (cpu_req.addr_select >= 16'hFF4A && cpu_req.addr_select <= 16'hFF4B)
+            else if (cpu_req.addr_select >= 16'hFF47 && cpu_req.addr_select <= 16'hFF4B)
                 `EN_INTERFACE(`EN_PPU_IF, 0)
             // 0xFF16-0xFF19 - APU Audio Channel 2
             else if (cpu_req.addr_select >= 16'hFF16 && cpu_req.addr_select <= 16'hFF19)
@@ -266,4 +286,5 @@ module mmu_m(
         if ((en_ifs & `EN_OAM_IF) || (en_ppu_ifs & `EN_PPU_OAM_IF))  
             `MAP_INTERFACE(`EN_OAM_IF, oam_if, en_ppu_ifs)                            else `UNMAP_INTERFACE(oam_if)
     end
+`endif
 endmodule

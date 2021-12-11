@@ -32,6 +32,17 @@ module bram_32k_rom_m (
         );
 endmodule
 
+module bram_bootrom_m (
+    input wire clk, 
+    mem_if.slave in);
+
+    bram_bootrom unit(
+        .addra(in.addr_select[9:0]),
+        .clka(clk), 
+        .douta(in.read_out)
+        );
+endmodule
+
 module bram_hram_m (
     input wire clk, 
     mem_if.slave in);
@@ -47,29 +58,44 @@ endmodule
 
 module bram_vram_m (
     input wire clk, 
-    mem_if.slave in);
+    mem_if.slave in,
+    mem_if.slave ppu_in);
 
     bram_vram unit(
         .addra(in.addr_select[12:0]),
         .clka(clk), 
         .dina(in.write_value),
         .wea(in.write_enable),
-        .douta(in.read_out)
+        .douta(in.read_out),
+
+        .addrb(ppu_in.addr_select[12:0]),
+        .clkb(clk),
+        .dinb(ppu_in.write_value),
+        .web(0),
+        .doutb(ppu_in.read_out)
         );
 endmodule
 
 module bram_oam_m (
     input wire clk, 
-    mem_if.slave in);
+    mem_if.slave in, 
+    mem_if.slave ppu_in);
 
     bram_oam unit(
         .addra(in.addr_select[7:0]),
         .clka(clk), 
         .dina(in.write_value),
         .wea(in.write_enable),
-        .douta(in.read_out)
+        .douta(in.read_out),
+
+        .addrb(ppu_in.addr_select[7:0]),
+        .clkb(clk),
+        .dinb(ppu_in.write_value),
+        .web(0),
+        .doutb(ppu_in.read_out)
         );
 endmodule
+
 
 module bram_main_ram_m (
     input wire clk, 

@@ -14,16 +14,20 @@ module mmio_joypad_m import cpu_defs::*;(
     assign face = je[7:4];  // a, b, select, start
     assign d_pad_and_face = d_pad & face;
 
+    logic [7:0] out_reg;
+
     /* Ouput for register */
     always_comb begin
+        out_reg[7:4] = { 2'b11 , sel };
+        case(sel)
+            2'b11: out_reg[3:0] = 4'b1111;                      
+            2'b10: out_reg[3:0] = d_pad;                      
+            2'b01: out_reg[3:0] = face;
+            2'b00: out_reg[3:0] = d_pad_and_face;
+        endcase
+
         if (req.addr_select == 16'hFF00) begin
-            req.read_out[7:4] = { 2'b11 , sel };
-            case(sel)
-                2'b11: req.read_out[3:0] = 4'b1111;                      
-                2'b10: req.read_out[3:0] = d_pad;                      
-                2'b01: req.read_out[3:0] = face;
-                2'b00: req.read_out[3:0] = d_pad_and_face;
-            endcase
+            req.read_out = out_reg;
         end else begin
             req.read_out = 8'hFF;
         end

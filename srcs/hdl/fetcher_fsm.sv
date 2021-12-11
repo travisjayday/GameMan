@@ -1,4 +1,4 @@
-
+`timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
 // Engineer: 
@@ -99,8 +99,8 @@ module fetcher_fsm(
     ///////////////////////////////////////////////////////////////////////////////////////
     /*SPRITE PIXEL FSM LOGIC */
     logic [7:0][5:0] pixel_row_sprite;
-    (* ASYNC_REG = "TRUE" *) reg [9:0][7:0][5:0] pixel_rows_sprite;
-    (* ASYNC_REG = "TRUE" *) reg [9:0][51:0] sprites_on_curr_tile ;
+    logic [9:0][7:0][5:0] pixel_rows_sprite;
+    logic [9:0][51:0] sprites_on_curr_tile;
     logic sprite_on_curr_tile;
     logic [7:0] sprite_tile_0_data, sprite_tile_1_data;   
     logic [3:0] sprite_index, sprite_i; 
@@ -108,14 +108,39 @@ module fetcher_fsm(
     logic [15:0] fetcher_vram_out;
     ///////////////////////////////////////////////////////////////////////////////////////
     /*TEMP VARIABLES */
-
-    logic [2:0] sprite_shift;    
-    assign sprite_shift = sprites_on_curr_tile[sprite_index][51:49];
+    
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //Gets Queue of Sprites on Current Tile 
+    logic [9:0][51:0] input_queue;
+    always_comb begin     
+        for(int i = 0; i < MAX_SPRITE; i++) begin
+           if (((tilemapX + 1) << 3) <= sprite_queue[i][23:16] && ((tilemapX + 2)  << 3) > sprite_queue[i][23:16])  begin               
+                input_queue[i] = { (sprite_queue[i][23:16] & 8'h07), 1'b0, sprite_queue[i][47:0]};
+           end else if ((tilemapX << 3) < sprite_queue[i][23:16] && ((tilemapX +1) << 3) >= sprite_queue[i][23:16]) begin                
+                input_queue[i] = { (sprite_queue[i][23:16] & 8'h07), 1'b1, sprite_queue[i][47:0]};
+           end else begin
+                input_queue[i] = 0;
+           end  
+        end     
+        sprite_on_curr_tile = (input_queue[0] || input_queue[1] || input_queue[2] || input_queue[3] || input_queue[4] 
+                            || input_queue[5] || input_queue[6] || input_queue[7] || input_queue[8] || input_queue[9]);       
+    end
+    
+    
+    
+       
+    logic shift_start;   
+    pipeline_queue_shift pipe_shift(
+        .clk(clk), .start(shift_start),
+        .q_in(input_queue), .q_out(sprites_on_curr_tile)
+        );   
+        
     sprite_fetcher_vram_a get_vram_a(.LCDC(LCDC), .LY(LY),
             .sprite_queue_in(sprites_on_curr_tile), .index(sprite_i),
             .vram_a_out(fetcher_vram_out)
             );
-       
+    logic [2:0] sprite_shift;    
+    assign sprite_shift = sprites_on_curr_tile[sprite_index][51:49];
     ///////////////////////////////////////////////////////////////////////////////////////
     always_comb begin 
         current_tile_in_window = (WX - 7 <= ((tilemapX) << 3) && WX - 7 + MAX_X >= ((tilemapX )<< 3)) && (WY <= LY);
@@ -135,7 +160,8 @@ module fetcher_fsm(
             //OUPUTS 
             
             done_out <= 0;          
-            //INTERNAL LOGIC            
+            //INTERNAL LOGIC     
+            //shift_start <= 1;       
             tile_0_data <= 0;
             tile_1_data <= 0;
             tilemapX <= 0;
@@ -160,6 +186,7 @@ module fetcher_fsm(
             state_count  <= 0;
             state <= init;   
         end else begin
+              
             if (state == init) begin
                     if(state_count == INIT_CYCLES - 1) begin             
                         if(LCDC[4]) begin
@@ -178,6 +205,7 @@ module fetcher_fsm(
                     end 
             end else if (state == get_tile) begin
                     if (state_count == GET_TILE_CYCLES - 1) begin                        
+                        shift_start <= 0; 
                         state_count <= 0; 
                         state <= get_tile_data_low;
                     end else begin ;
@@ -190,7 +218,7 @@ module fetcher_fsm(
                                 vram_a <=  16'h9000 + ((vram_dout) << 4 ) + ((fetcherY[2:0]) << 1);
                             end 
                         end
-                       
+                        shift_start <= 1; 
                         state_count <= state_count + 1;
                     end
             end else if (state == get_tile_data_low) begin
@@ -252,6 +280,7 @@ module fetcher_fsm(
                                 done_out <= 1;
                                 state <= done;
                             end else begin 
+                                //shift_start <= 1; 
                                 tilemapX <= tilemapX + 1;
                                 state <= get_tile;
                             end 
@@ -363,7 +392,7 @@ module fetcher_fsm(
                             done_out <= 1;
                             state <= done;
                         end else begin 
-                            
+                            //shift_start <= 1; 
                             tilemapX <= tilemapX + 1;
                             state <= get_tile;
                         end 
@@ -376,6 +405,7 @@ module fetcher_fsm(
             if(valid_bg_window_row) begin
                 LX <= LX + 1; 
             end 
+            
         end
     end  
     ////////////////  ////////////////  ////////////////  ////////////////  ////////////////  ////////////////
@@ -454,47 +484,8 @@ module fetcher_fsm(
         end 
     end 
     
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //Gets Queue of Sprites on Current Tile 
-    logic [51:0] temp;
-    
-    
-    always_comb begin
-        for(int i = 0; i < MAX_SPRITE; i++) begin
-           if (((tilemapX + 1) << 3) <= sprite_queue[i][23:16] && ((tilemapX + 2)  << 3) > sprite_queue[i][23:16])  begin
-               
-                sprites_on_curr_tile[i] = { (sprite_queue[i][23:16] & 8'h07), 1'b0, sprite_queue[i][47:0]};
-           end else if ((tilemapX << 3) < sprite_queue[i][23:16] && ((tilemapX +1) << 3) >= sprite_queue[i][23:16]) begin
-                
-                sprites_on_curr_tile[i] = { (sprite_queue[i][23:16] & 8'h07), 1'b1, sprite_queue[i][47:0]};
-           end else begin
-                sprites_on_curr_tile[i] = 0;
-           end  
-        end     
-//        for (int i = 0; i < MAX_SPRITE; i++) begin
-//            for (int j = 0; j < MAX_SPRITE; j++) begin
-//                if (sprites_on_curr_tile[i][23:16] > sprites_on_curr_tile[j][23:16]) begin
-//                    temp = sprites_on_curr_tile[i];
-//                    sprites_on_curr_tile[i] = sprites_on_curr_tile[j];
-//                    sprites_on_curr_tile[j] = temp;
-//                end 
-//            end 
-//        end 
-        for (int i = 0; i < MAX_SPRITE; i++) begin
-            for (int j = 0; j < MAX_SPRITE; j++) begin
-                if (sprites_on_curr_tile[j] == 0 && sprites_on_curr_tile[j + 1] != 0) begin
-                    temp = sprites_on_curr_tile[j];
-                    sprites_on_curr_tile[j] = sprites_on_curr_tile[j + 1];
-                    sprites_on_curr_tile[j + 1] = temp;
-                end 
-            end 
-        end 
-        
-        sprite_on_curr_tile = (sprites_on_curr_tile[0] || sprites_on_curr_tile[1] || sprites_on_curr_tile[2] || sprites_on_curr_tile[3] || sprites_on_curr_tile[4] 
-                            || sprites_on_curr_tile[5] || sprites_on_curr_tile[7] || sprites_on_curr_tile[8] || sprites_on_curr_tile[9]);
-        
-    end
-    
+
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //SPRITE PIXEL ROW LOGIC 
     always_comb begin
@@ -539,30 +530,7 @@ logic [7:0] sprite_tile_y;
 assign sprite_tile_y = (LY - (sprites_on_curr_tile[sprite_index][31:24] - 16));
 
 endmodule
-module sprite_queue_shift_down_pipeline (
-        input wire clk, 
-        input wire start, 
-        input wire rst, 
-        output logic done_out,
-        input wire [9:0][51:0] queue_in,
-        output logic [9:0][51:0] queue_out
-    );
-    typedef enum {stage_0, stage_1, stage_2, stage_3, stage_4, stage_5, stage_6, done} states;
-    states state;
-    
-    always_ff @(posedge clk) begin
-        if(start || rst) begin
-            queue_out = '{default:'0};
-            state <= stage_0;
-        end else begin
-            if (state == stage_0) begin
-                
-            end 
-            
-        end 
-    end 
-    
-endmodule
+
 module sprite_fetcher_vram_a(
     input wire [7:0] LCDC,
     input wire [7:0] LY,
@@ -595,6 +563,42 @@ always_comb begin
     end 
 endmodule
 
+module pipeline_queue_shift (
+        input wire clk, 
+        input wire rst, 
+        input wire start,
+        output logic done_out,
+        input wire [9:0][51:0] q_in,
+        output logic [9:0][51:0] q_out
+    );
+    
+    logic [3:0] count, index;
 
-
+    always_ff @(posedge clk) begin
+        if(start || rst) begin 
+            count <= 0;
+            index <= 0;
+            done_out <= 0;
+            q_out <= '{default:'0};
+        end else begin 
+            if(index < 8 && !done_out) begin 
+                index <= index + 2;
+                if(q_in[index] != 0 && q_in[index + 1] != 0) begin 
+                    q_out[count] <= q_in[index];
+                    q_out[count + 1] <= q_in[index + 1];  
+                    count <= count + 2;   
+                end else if (q_in[index] != 0) begin
+                    q_out[count] <= q_in[index];
+                    count <= count + 1;
+                end else if (q_in[index + 1] != 0) begin 
+                    q_out[count] <= q_in[index + 1];
+                    count <= count + 1;
+                end 
+            end else begin
+                index <= 0;
+                done_out <= 1;
+            end 
+        end     
+    end 
+endmodule 
 `default_nettype wire

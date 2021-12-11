@@ -26,11 +26,11 @@ module mmio_ppu_m(
     mem_if.slave req,
     mem_if.master ppu_oam_req,
     mem_if.master ppu_vram_req,
-    output wire [1:0] pixel_out,
-    output wire [15:0] lcd_a,
-    output wire lcd_wr,
-    output wire vblank_interrupt,
-    output wire statline_interrupt
+    output logic [1:0] pixel_out,
+    output logic [15:0] lcd_a,
+    output logic lcd_wr,
+    output logic vblank_interrupt,
+    output logic statline_interrupt
     );
 
     logic start_in;
@@ -38,9 +38,15 @@ module mmio_ppu_m(
 
     // dummies
     logic vram_rd, vram_wr, oam_wr, oam_rd;
+    logic hsync; 
+    logic vsync;
+    logic [7:0] h_count; 
+    logic [7:0] v_count; 
 
     ppu _ppu(
         .clk(clk), .rst(rst), .start(start_in),
+        .hsync(hsync), .vsync(vsync), 
+        .h_count(h_count), .v_count(v_count),
         //LCD Logic
         .pixel_out(pixel_out),
         //SCREEN BUFFER

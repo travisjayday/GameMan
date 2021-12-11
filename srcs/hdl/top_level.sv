@@ -6,7 +6,12 @@ module top_level import cpu_defs::*;(
     output logic[15:0] led,
     output logic aud_pwm,
     output logic aud_sd,
-    input wire [7:0] je,
+    inout  wire      [7:0]       ja,              // ja : d[7:0]
+    output logic     [7:0]       jb,              // jb : a[7:0]
+    output logic     [7:0]       jc,              // 0:reset, 1:cs, 2:rd, 3:wr, 4:clk. 5-7:nc
+    output logic     [7:0]       jd,              // jd : a[15:8]
+    input wire       [7:0]       je,               // controlsinput wire [7:0] je,
+    output logic [5:0] led16,
     output logic[3:0] vga_r,
     output logic[3:0] vga_b,
     output logic[3:0] vga_g,
@@ -21,10 +26,29 @@ module top_level import cpu_defs::*;(
     logic clk_4mhz; 
     clk_gen _clk_gen(clk_100mhz, clk_4mhz);
 
+    mem_if ppu_oam_if();    // Busmaster 2
+    mem_if ppu_vram_if();   // Busmaster 3
+
     // Contains:    Cartridge ROM
     // Size:        32KB 
+    mem_if nop(); 
+
     mem_if rom_if(); 
-    bram_32k_rom_m rom(clk_4mhz, rom_if);
+    bram_32k_rom_m rom(clk_4mhz, nop);
+
+    cart_if cart(
+                    .clk(clk_4mhz),
+                    .rst(rst),
+                    .rom_if(rom_if),
+                    
+                    .clk_out(jc[4]),
+                    .n_rst_out(jc[0]),
+                    .n_write_enable_out(jc[3]),
+                    .n_read_enable_out(jc[2]),
+                    .n_cs_out(jc[1]),
+                    .addr_out({jd,jb}),
+                    .data_out(ja)
+                    );
 
     // WRAM: Size 8KB
     mem_if wram_if(); 
@@ -32,16 +56,18 @@ module top_level import cpu_defs::*;(
 
     // VRAM: Size: 8KB
     mem_if vram_if(); 
-    bram_vram_m vram (clk_4mhz, vram_if);
+    bram_vram_m vram (clk_4mhz, vram_if, ppu_vram_if);
 
     // OAM: Size: 160B
     mem_if oam_if(); 
-    bram_oam_m oam (clk_4mhz, oam_if);
+    bram_oam_m oam (.clk(clk_4mhz), .in(oam_if), .ppu_in(ppu_oam_if));
 
     // HRAM: Size: 127B
     mem_if hram_if(); 
     bram_hram_m hram (clk_4mhz, hram_if);
 
+    mem_if bootrom_if(); 
+    bram_bootrom_m bootrom(clk_4mhz, bootrom_if);
 
     // Interrupt Handler Module 
     // Sets IF flag for CPU. Handles writes and reads to IF and IE cpu.regs. 
@@ -64,19 +90,19 @@ module top_level import cpu_defs::*;(
     mmio_apu_m mmio_apu(clk_4mhz, rst, mmio_apu_if, sys_counter, pwm_val);
     assign aud_pwm = pwm_val ? 1'bZ : 1'b0; 
     assign aud_sd = 1;
-    
+
+    logic [1:0] pixel_out;
+
     //DEBUG
-    assign led = {regs_out.PC[7:0], 7'b0, pwm_val};
 
     // 0xFF00 - Joypad 
     mem_if mmio_joypad_if();
     mmio_joypad_m joypad(clk_4mhz, rst, je, mmio_joypad_if);
 
+    assign led = regs_out.PC;
+
     // PPU
     mem_if mmio_ppu_if();      
-    mem_if ppu_oam_if();    // Busmaster 2
-    mem_if ppu_vram_if();   // Busmaster 3
-    logic [1:0] pixel_out;
     logic [15:0] lcd_addr;
     logic lcd_wr;
     logic vclock;
@@ -88,6 +114,7 @@ module top_level import cpu_defs::*;(
         .req(mmio_ppu_if),
         .ppu_oam_req(ppu_oam_if),
         .ppu_vram_req(ppu_vram_if),
+        .pixel_out(pixel_out),
         .lcd_a(lcd_addr),
         .lcd_wr(lcd_wr),
         .vblank_interrupt(interrupts.vblank),
@@ -106,7 +133,7 @@ module top_level import cpu_defs::*;(
     //VGA
     vga_master vga(
         .clk_100mhz(clk_100mhz),
-        .rst(rst),
+        .rst(0),
         .vga_r(vga_r),
         .vga_b(vga_b),
         .vga_g(vga_g),
@@ -129,8 +156,6 @@ module top_level import cpu_defs::*;(
         .rst(rst), 
         .cpu_req(cpu_mmu_if), 
         .dma_req(dma_mmu_if),
-        .ppu_oam_req(ppu_oam_if),
-        .ppu_vram_req(ppu_vram_if),
         .rom_if(rom_if), 
         .vram_if(vram_if),
         .oam_if(oam_if),
@@ -141,7 +166,8 @@ module top_level import cpu_defs::*;(
         .mmio_dma_if(mmio_dma_if),
         .mmio_apu_if(mmio_apu_if),
         .mmio_ppu_if(mmio_ppu_if),
-        .mmio_joypad_if(mmio_joypad_if)
+        .mmio_joypad_if(mmio_joypad_if),
+        .bootrom_if(bootrom_if)
     );
 
     // CPU 
@@ -220,7 +246,7 @@ module top_level import cpu_defs::*;(
         `PRINT_MEM("VRAM", vram, 'h2000);
         `PRINT_MEM("WRAM", wram, 'h2000);
         `PRINT_MEM("HRAM", hram, 'd128);
-        `PRINT_MEM("ROM0", rom,  'h8000);
+        //`PRINT_MEM("ROM0", rom,  'h8000);
     end
     endtask 
 

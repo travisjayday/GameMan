@@ -1,15 +1,24 @@
 INCLUDE "hardware.inc"
 
-SECTION "Header", ROM0[$00] 
+SECTION "Header", ROM0[$0000]
+
+
 	LD SP,$fffe		; $0000  Setup Stack
 
+	;LD A,$fc		; $001d  Setup BG palette
+	;LDH [$47],A	; $001f
+	
+	;LD A,$91		; $005b
+	;LDH [$40],A		; $005d  Turn on LCD, showing Background
+	
+	;JP $0100
 	XOR A			; $0003  Zero the memory from $8000-$9FFF (VRAM)
 	LD HL,$9fff		; $0004
 Addr_0007:
 	LD [HL-],A		; $0007
 	BIT 7,H		; $0008
-	;JR NZ, Addr_0007	; $000a
-	JR Z, Addr_0007	; $000a
+	JR NZ, Addr_0007	; $000a
+	;JR Z, Addr_0007	; $000a
 
 	LD HL,$ff26		; $000c  Setup Audio
 	LD C,$11		; $000f
@@ -28,20 +37,21 @@ Addr_0007:
 	LDH [$47],A	; $001f
 
 	;LD DE,$0104		; $0021  Convert and load logo data from cart into Video RAM
-	LD DE,$00a8		; $0021  Convert and load logo data from cart into Video RAM
+	LD DE,(Addr_00A8 + $E000)		; $0021  Convert and load logo data from cart into Video RAM
 	
 	LD HL,$8010		; $0024
 Addr_0027:
 	LD A,[DE]		; $0027
-	CALL $0095		; $0028
-	CALL $0096		; $002b
+	CALL (Addr_0095 + $E000) 		; $0028
+	CALL (Addr_0096 + $E000)		; $002b
 	INC DE		; $002e
 	LD A,E		; $002f
-	CP $34		; $0030
+	CP $DB		; $0030
 	JR NZ, Addr_0027	; $0032
 
-	LD DE,$00d8		; $0034  Load 8 additional bytes into Video RAM (the tile for ®)
+	LD DE, (Addr_00D8 + $E000)		; $0034  Load 8 additional bytes into Video RAM (the tile for ®)
 	LD B,$08		; $0037
+	LD HL,$8190		; $0024
 Addr_0039:
 	LD A,[DE]		; $0039
 	INC DE		; $003a
@@ -68,7 +78,7 @@ Addr_004A:
 
 Addr_0055:
 	LD H,A		; $0055  Initialize scroll count, H=0
-	LD A,$24		; $0056
+	LD A,$64 ; $0056
 	LD D,A		; $0058  set loop count, D=$64
 	LDH [$42],A	; $0059  Set vertical scroll register
 	LD A,$91		; $005b
@@ -117,8 +127,9 @@ Addr_0086:
 	JR Addr_0060	; $0093
 
 	; ==== Graphic routine ====
-
+Addr_0095:
 	LD C,A		; $0095  "Double up" all the bits of the graphics data
+Addr_0096:
 	LD B,$04		; $0096     and store in Video RAM
 Addr_0098:
 	PUSH BC		; $0098
@@ -157,10 +168,12 @@ Addr_00E6:
 	INC DE		; $00e7
 	CP [HL]		; $00e8	;compare logo data in cart to DMG rom
 	;JR NZ,$fe		; $00e9	;if not a match, lock up here
+	nop
+	nop
 	INC HL		; $00eb
 	LD A,L		; $00ec
 	CP $34		; $00ed	;do this for $30 bytes
-	JR NZ, Addr_00E6	; $00ef
+	;JR NZ, Addr_00E6	; $00ef
 
 	LD B,$19		; $00f1
 	LD A,B		; $00f3
@@ -168,12 +181,15 @@ Addr_00F4:
 	ADD [HL]		; $00f4
 	INC HL		; $00f5
 	DEC B			; $00f6
-	JR NZ, Addr_00F4	; $00f7
-	ADD [HL]		; $00f9
+	;JR NZ, Addr_00F4	; $00f7
+	;ADD [HL]		; $00f9
 	;JR NZ,$fe		; $00fa	; if $19 + bytes from $0134-$014D  don't add to $00
+	nop
+	nop
 						;  ... lock up
 
-	;LD A,$01		; $00fc
+	LD A,$01		; $00fc
 	;LDH [$50],A	; $00fe	;turn off DMG rom
+	jp $0100
 
-	db $fd
+	;db $fd

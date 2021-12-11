@@ -41,4 +41,13 @@ SECTION "Header", ROM0[$00]
 	ld a, $11
 	ld [bc], a
 
+	ld hl, $fffe
+	ld b, [hl]
+
+	ld hl, $dfff
+	ld c, [hl]
+
+	ld hl, $fe00
+	ld e, [hl]
+
 	db $fd

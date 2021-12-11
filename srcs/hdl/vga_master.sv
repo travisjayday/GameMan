@@ -7,16 +7,17 @@ module vga_master(
    output logic[3:0] vga_g,
    output logic vga_hs,
    output logic vga_vs,
-   
+    
    output logic [14:0] addrb,
    output logic clkb,
    input wire [1:0] doutb
     );
-    parameter RED   = 4'b0111;
+    parameter RED   = 4'b1111;
     parameter GREEN = 4'b1111;
-    parameter BLUE  = 4'b0001;
+    parameter BLUE  = 4'b1111;
     
     logic vclock;
+    assign clkb = vclock;
     clk_wiz_0 _100mhz_to_25mhz(.reset(rst),.clk_in1(clk_100mhz), .clk_out1(vclock));
     
     logic [9:0] hcount;
@@ -51,6 +52,7 @@ module vga_master(
     
     logic [1:0] pixel_data;
     logic [1:0] pixel_black;
+    assign pixel_black = doutb;
    
     logic pixel_valid;
     assign pixel_valid = (hcount < 587) && (hcount > 53)  && (vcount < 480);

@@ -4,9 +4,8 @@ fix="../../toolchain/rgbfix.exe"
 emu="../../emu/bgb64.exe"
 
 main:
-	$(cc) -L -w -o out.o prog.gameboy.asm
+	$(cc) -L -o out.o prog.gameboy.asm
 	$(ll) -o out.gb out.o
-	#$(fix) -v -p 0xFF out.gb
 
 emu: main
 	$(emu) out.gb

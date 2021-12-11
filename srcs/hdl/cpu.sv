@@ -71,7 +71,7 @@ module cpu_m import cpu_defs::*;(
             reg_wr_select <= REG_UNKOWN;
             reg_wr_value <= 0; 
             mmu.write_enable <= 0; 
-            mmu.addr_select <= 0; 
+            mmu.addr_select <= regs.PC; 
         end else begin
             // See http://www.z80.info/z80arki.htm for overlapping execution model
             // Each state is commented with it's T-state from the diagram

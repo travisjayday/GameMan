@@ -62,10 +62,13 @@ def select_prog(prog_file):
     write_to_file(sim_mem_path, prog_coe)
 
 if __name__ == "__main__": 
-    _make_coe = False
+    _make_coe = True
     if _make_coe: 
-        out = make_coe('F:\\Projects\\GameMan\\software\\tools\\oam.bin')
-        with open('F:\\Projects\\GameMan\\software\\tools\\oam.coe', 'w') as f:
+        #out = make_coe('F:\\Projects\\GameMan\\software\\progs\\ut_bootrom_mini\\out.gb')
+        #out = make_coe('F:\\Projects\\GameMan\\software\\progs\\ut_bootrom\\out.gb')
+        out = make_coe('F:\\Projects\\GameMan\\software\\progs\\prog_cpu_test\\out.gb')
+        #out = make_coe('F:\\Projects\\GameMan\\software\\emu\\tetris.gb')
+        with open('F:\\Projects\\GameMan\\cputest.coe', 'w') as f:
             f.write(out)
         quit()
 
