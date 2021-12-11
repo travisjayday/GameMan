@@ -62,22 +62,37 @@ module ppu(
     logic mode_3_start, mode_3_done;
     logic [11:0] mode_3_cycles;
     
+<<<<<<< Updated upstream
     logic [15:0] mode_2_oam_a;
     mode_2_fsm mode_2(
         .clk(clk), .rst(mode_2_start), .start(mode_2_start),.done_out(mode_2_done),
         //OAM Data Bus, 0xFE00 - 0xFE9F 
         .oam_dout(oam_dout), .oam_a(mode_2_oam_a), .oam_din(oam_din), .oam_wr(oam_wr), 
+=======
+    mode_2_fsm mode_2(
+        .clk(clk), .rst(mode_2_start), .start(mode_2_start),.done_out(mode_2_done),
+        //OAM Data Bus, 0xFE00 - 0xFE9F 
+        .oam_dout(oam_dout), .oam_a(oam_a), .oam_din(oam_din), .oam_wr(oam_wr), 
+>>>>>>> Stashed changes
         //Registers
         .LCDC(LCDC), .LY(LY),
         //Output Sprites 2 bytes 10 elements 
         .sprite_queue_out(mode_2_sprite_queue), .mode_2_cycles(mode_2_cycles)
     ); 
+<<<<<<< Updated upstream
    logic [15:0] mode_3_vram_a;
    
    mode_3_fsm mode_3(
         .clk(clk), .rst(mode_3_start), .start(mode_3_start),.done_out(mode_3_done),
           //VRAM DATA BUS, 0x8000 - 0x9FFF  
         .vram_dout(vram_dout), .vram_a(mode_3_vram_a), .vram_din(vram_din), .vram_wr(vram_wr), 
+=======
+        
+   mode_3_fsm mode_3(
+        .clk(clk), .rst(mode_3_start), .start(mode_3_start),.done_out(mode_3_done),
+          //VRAM DATA BUS, 0x8000 - 0x9FFF  
+        .vram_dout(vram_dout), .vram_a(vram_a), .vram_din(vram_din), .vram_wr(vram_wr), 
+>>>>>>> Stashed changes
          //OAM Data Bus, 0xFE00 - 0xFE9F 
         //.oam_dout(oam_dout), .oam_a(oam_a), .oam_din(oam_din), .oam_wr(oam_wr),
         //Registers
@@ -95,13 +110,21 @@ module ppu(
     
     typedef enum {MODE_2, MODE_3, MODE_0, MODE_1} states;
     states state;
+<<<<<<< Updated upstream
     
     logic v_interrupt;
+=======
+        
+>>>>>>> Stashed changes
     logic [8:0] mode_2_3_time;
     logic [8:0] hsync_count; 
     assign v_count = LY;
     
+<<<<<<< Updated upstream
 
+=======
+    logic v_interrupt;
+>>>>>>> Stashed changes
     always_ff @(posedge clk) begin 
         if(rst || start) begin   
             LY <= 0;
@@ -110,8 +133,13 @@ module ppu(
             hsync_count <= 0;
             mode_2_3_time <= 0;
             mode_2_start <= 1;
+<<<<<<< Updated upstream
             state <= MODE_2;
             v_interrupt <= 0;
+=======
+            v_interrupt <= 0;
+            state <= MODE_2;
+>>>>>>> Stashed changes
         end else begin
             if(LCDC[7]) begin 
                  if (state == MODE_2) begin
@@ -135,8 +163,13 @@ module ppu(
                         mode_2_3_time <= 0;
                         if(LY + 1 > MAX_SCANLINE - 1) begin 
                             vsync <= 1;
+<<<<<<< Updated upstream
                             hsync_count <= 0;
                             v_interrupt <= 1;
+=======
+                            v_interrupt <= 1;
+                            hsync_count <= 0;
+>>>>>>> Stashed changes
                             state <= MODE_1;
                         end else begin 
                             LY <= LY + 1;
@@ -155,12 +188,21 @@ module ppu(
                         vsync <= 0;
                         hsync_count <= 0;
                         mode_2_3_time <= 0;
+<<<<<<< Updated upstream
                         mode_2_start <= 1;
                         
                         state <= MODE_2;
                     end else begin
                         v_interrupt <= 0;
                         vsync <= 1;
+=======
+
+                        mode_2_start <= 1;
+                        state <= MODE_2;
+                    end else begin
+                        vsync <= 1;
+                        v_interrupt <= 0;
+>>>>>>> Stashed changes
                         if(hsync_count >= SCANLINE_CLOCK - 1 ) begin
                             hsync_count <= 0;
                             LY <= LY + 1;
@@ -195,6 +237,7 @@ module ppu(
     end 
     always_ff @(posedge clk) begin 
         if (rst) begin                   
+<<<<<<< Updated upstream
                 LCDC <= 8'hD3;                    
                 STAT[6:3] <= 0;
                 SCY <= 0;
@@ -206,6 +249,19 @@ module ppu(
                 OBP1 <= 8'hFF;
                 WX <= 0;
                 WY <= 0;
+=======
+                LCDC <= 8'hE7;                    
+                STAT[6:3] <= 0;
+                SCY <= 8'h08;
+                SCX <= 0;
+                LYC <= 0;
+                DMA <= 0;
+                BGP <= 8'hE1;
+                OBP0 <= 8'hE0;
+                OBP1 <= 8'hD0;
+                WX <= 8'h07;
+                WY <= 8'h88;
+>>>>>>> Stashed changes
         end else begin 
             if(mmio_wr) begin 
                 case(mmio_a) 
@@ -249,7 +305,11 @@ module ppu(
                             (interrupt_mode2 & STAT[5]) | 
                             (interrupt_mode1 & STAT[4]) | 
                             (interrupt_mode0 & STAT[3]);
+<<<<<<< Updated upstream
     assign vblank_interrupt = v_interrupt;
+=======
+    assign vblank_interrupt = interrupt_mode1;
+>>>>>>> Stashed changes
     // Ask Ahmad?
     states last_state; 
     always @(posedge clk) begin last_state <= state; end
@@ -267,6 +327,7 @@ module ppu(
             MODE_3 : STAT[1:0] = 2'b11;
         endcase 
     end 
+<<<<<<< Updated upstream
     always_comb begin
         case(state)
             MODE_0 : begin 
@@ -288,6 +349,8 @@ module ppu(
                      end 
         endcase 
     end 
+=======
+>>>>>>> Stashed changes
     
 endmodule
 `default_nettype wire

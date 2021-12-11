@@ -161,7 +161,11 @@ module fetcher_fsm(
             
             done_out <= 0;          
             //INTERNAL LOGIC     
+<<<<<<< Updated upstream
             //shift_start <= 1;       
+=======
+            shift_start <= 0;       
+>>>>>>> Stashed changes
             tile_0_data <= 0;
             tile_1_data <= 0;
             tilemapX <= 0;
@@ -204,9 +208,11 @@ module fetcher_fsm(
                         state_count <= state_count + 1; 
                     end 
             end else if (state == get_tile) begin
+                    
                     if (state_count == GET_TILE_CYCLES - 1) begin                        
                         shift_start <= 0; 
                         state_count <= 0; 
+                        shift_start <= 0; 
                         state <= get_tile_data_low;
                     end else begin ;
                         if(LCDC[4]) begin
@@ -218,7 +224,11 @@ module fetcher_fsm(
                                 vram_a <=  16'h9000 + ((vram_dout) << 4 ) + ((fetcherY[2:0]) << 1);
                             end 
                         end
+<<<<<<< Updated upstream
                         shift_start <= 1; 
+=======
+                         shift_start <= 1; 
+>>>>>>> Stashed changes
                         state_count <= state_count + 1;
                     end
             end else if (state == get_tile_data_low) begin
@@ -527,7 +537,8 @@ assign oam_a = 0;
 logic [7:0] bg_tile_x;
 assign bg_tile_x = LX >> 3;
 logic [7:0] sprite_tile_y;
-assign sprite_tile_y = (LY - (sprites_on_curr_tile[sprite_index][31:24] - 16));
+assign sprite_tile_y = (LY - (sprites_on_curr_tile[sprite_i][31:24] - 16));
+
 
 endmodule
 
@@ -538,6 +549,7 @@ module sprite_fetcher_vram_a(
     input wire [3:0] index, 
     output logic [15:0] vram_a_out
 );
+<<<<<<< Updated upstream
 always_comb begin
     if(LCDC[2]) begin
             if(sprite_queue_in[index][6]) begin
@@ -551,8 +563,23 @@ always_comb begin
                     vram_a_out = 16'h8000 + ((sprite_queue_in[index][15:8]) << 4) + (((LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);
                 end begin 
                     vram_a_out = 16'h8000 + ((sprite_queue_in[index][15:8] + 1) << 4) + (((LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);
+=======
+    always_comb begin
+        if(LCDC[2]) begin
+                if(sprite_queue_in[index][6]) begin
+                    if( ((LY - (sprite_queue_in[index][31:24] - 16)) >= 0) && ((LY - (sprite_queue_in[index][31:24] - 16)) < 8)) begin
+                        vram_a_out = 16'h8000 + ((sprite_queue_in[index][15:8] + 1) << 4) + (( 7 - (LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);
+                    end else begin 
+                        vram_a_out = 16'h8000 + ((sprite_queue_in[index][15:8]) << 4) + ((7 - (LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);
+                    end 
+                end else begin
+                    if( ((LY - (sprite_queue_in[index][31:24] - 16)) >= 0) &&  ((LY - (sprite_queue_in[index][31:24] - 16)) < 8)) begin
+                        vram_a_out = 16'h8000 + ((sprite_queue_in[index][15:8]) << 4) + (((LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);
+                    end else begin 
+                        vram_a_out = 16'h8000 + ((sprite_queue_in[index][15:8] + 1) << 4) + (((LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);
+                    end 
+>>>>>>> Stashed changes
                 end 
-            end 
         end else begin
             if(sprite_queue_in[index][6]) begin
                 vram_a_out = 16'h8000 + (sprite_queue_in[index][15:8] << 4) + (( 7 - (LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);                

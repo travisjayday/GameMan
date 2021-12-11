@@ -5,6 +5,12 @@ module ppu_top_level(
    input wire clk_100mhz,
    input wire btnu,
    input wire btnc,
+<<<<<<< Updated upstream
+=======
+   input wire btnl,
+   input wire btnr,
+   input wire btnd,
+>>>>>>> Stashed changes
    output logic[3:0] vga_r,
    output logic[3:0] vga_b,
    output logic[3:0] vga_g,
@@ -15,15 +21,25 @@ module ppu_top_level(
     parameter DEBOUNCE_COUNT = 100000;
 
     logic vclock;
-    clk_wiz_0 clkdivider(.reset(1'b0),.clk_in1(clk_100mhz), .clk_out1(vclock));
+    logic ppu_start, clk_4mhz, _100_mhz_out,clk_50mhz;
     
+    clk_wiz_0 vclock_gen(.clk_in1(clk_100mhz), .clk_out1(vclock));
+    
+    clk_wiz_1 main_clock_gen(.clk_in1(vclock), .clk_out1(clk_4mhz));
+    
+    
+
     logic [9:0] hcount;
     logic [9:0] vcount;     
     logic hsync;
     logic vsync;
     logic blank;
     
+<<<<<<< Updated upstream
     vga vg_ape(.rst(btnu),.vclock_in(vclock),.hcount_out(hcount),.vcount_out(vcount),
+=======
+    vga vg_ape(.rst(0),.vclock_in(vclock),.hcount_out(hcount),.vcount_out(vcount),
+>>>>>>> Stashed changes
           .hsync_out(hsync),.vsync_out(vsync),.blank_out(blank));
     
     logic [7:0] x;
@@ -51,8 +67,12 @@ module ppu_top_level(
     // PPU AHMAD START
     /////////////////////////////////////////////////////////////////////////////////////////////////
     //INPUTS 
+<<<<<<< Updated upstream
     logic ppu_start, clk_4mhz;
     clk_gen _clk_gen(.clk_in(clk_100mhz),.clk_out(clk_4mhz));
+=======
+    //clk_gen _clk_gen(.clk_in(clk_100mhz),.clk_out(clk_4mhz));
+>>>>>>> Stashed changes
     //OUTPUTS
     logic ppu_hsync, ppu_vsync;
     logic [7:0] ppu_vcount, ppu_hcount;
@@ -75,11 +95,26 @@ module ppu_top_level(
     logic [7:0]  mmio_din;
     logic        mmio_wr;
     
+<<<<<<< Updated upstream
     logic frame_advance;
     debounce #(.DEBOUNCE_COUNT(DEBOUNCE_COUNT)) db1 (.reset_in(btnu), .clock_in(clk_4mhz), .noisy_in(btnc),.clean_out(frame_advance));
     
     ppu uut(
         .clk(clk_4mhz), .rst(btnu), .start(btnu),
+=======
+    logic scroll_left, scroll_right;
+    debounce #(.DEBOUNCE_COUNT(DEBOUNCE_COUNT)) db1 (.reset_in(btnc), .clock_in(clk_4mhz), .noisy_in(btnl),.clean_out(scroll_left));
+    debounce #(.DEBOUNCE_COUNT(DEBOUNCE_COUNT)) db2 (.reset_in(btnc), .clock_in(clk_4mhz), .noisy_in(btnr),.clean_out(scroll_right));
+    
+    
+    logic scroll_up, scroll_down;
+    debounce #(.DEBOUNCE_COUNT(DEBOUNCE_COUNT)) db3 (.reset_in(btnc), .clock_in(clk_4mhz), .noisy_in(btnu),.clean_out(scroll_up));
+    debounce #(.DEBOUNCE_COUNT(DEBOUNCE_COUNT)) db4 (.reset_in(btnc), .clock_in(clk_4mhz), .noisy_in(btnd),.clean_out(scroll_down));
+    
+    
+    ppu uut(
+        .clk(clk_4mhz), .rst(btnc), .start(btnc),
+>>>>>>> Stashed changes
         //LCD Logic
         .hsync(ppu_hsync), .vsync(ppu_vsync),
         .h_count(ppu_hcount), .v_count(ppu_vcount), 
@@ -98,7 +133,7 @@ module ppu_top_level(
         .addra(vram_a[12:0]),
         .clka(clk_4mhz), 
         .dina(vram_din),
-        .wea(vram_wr),
+        .wea(0),
         .douta(vram_dout)
         );
       
@@ -106,10 +141,64 @@ module ppu_top_level(
         .addra(oam_a[7:0]),
         .clka(clk_4mhz), 
         .dina(oam_din),
-        .wea(oam_wr),
+        .wea(0),
         .douta(oam_dout)
         );
+     logic [7:0] scrollY, scrollX;
+     logic [31:0] btn_count;
+     always_ff @(posedge clk_4mhz) begin
         
+<<<<<<< Updated upstream
+=======
+        if(btnc) begin
+
+            scrollY <= 0;
+            scrollX <= 0;
+        end else if (scroll_up ) begin
+            if (btn_count >= 4_194_304/4) begin 
+                mmio_wr <= 1;
+                mmio_din <= scrollY;
+                mmio_a <= 16'hFF42;
+                scrollY <= scrollY + 1;
+                btn_count <= 0;
+             end else begin 
+                btn_count <= btn_count + 1;
+             end 
+        end else if (scroll_down ) begin
+            if (btn_count >= 4_194_304/4) begin 
+                mmio_wr <= 1;
+                mmio_din <= scrollY;
+                mmio_a <= 16'hFF42;
+                scrollY <= scrollY - 1;
+                btn_count <= 0;
+             end else begin 
+                btn_count <= btn_count + 1;
+             end 
+        end else if (scroll_right ) begin
+            if (btn_count >= 4_194_304/4) begin 
+                mmio_wr <= 1;
+                mmio_din <= scrollX;
+                mmio_a <= 16'hFF43;
+                scrollX <= scrollX + 1;
+                btn_count <= 0;
+             end else begin 
+                btn_count <= btn_count + 1;
+             end 
+        end else if (scroll_left) begin
+            if (btn_count >= 4_194_304/4) begin 
+                mmio_wr <= 1;
+                mmio_din <= scrollX;
+                mmio_a <= 16'hFF43;
+                scrollX <= scrollX - 1;
+                btn_count <= 0;
+             end else begin 
+                btn_count <= btn_count + 1;
+             end 
+        end else begin
+            mmio_wr <= 0;
+        end 
+     end 
+>>>>>>> Stashed changes
     /////////////////////////////////////////////////////////////////////////////////////////////////
     // PPU AHMAD END
     /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,10 +215,12 @@ module ppu_top_level(
                             .clkb(vclock),
                             .doutb(pixel_black)
                             );
+    
                           
                     
     assign pixel_data = addr_valid ? pixel_black : 2'b11;
-
+    
+    
     logic b,hs,vs;
     logic [11:0] rgb;
     
@@ -234,6 +325,7 @@ module debounce (input wire reset_in, clock_in, noisy_in,
      else if (count == DEBOUNCE_COUNT) clean_out <= new_input;
      else count <= count+1;
 
+<<<<<<< Updated upstream
 
 endmodule
 
@@ -251,6 +343,25 @@ module clk_gen(
         clk_out = 0; 
     end
 
+=======
+
+endmodule
+
+`default_nettype wire
+
+module clk_gen(
+    (* gated_clock = "yes" *) input clk_in, 
+    output reg clk_out
+);
+
+    /* Generate a 4.16Mhz Clock by dividing 100Mhz by 12*/
+    logic [5:0] clk_divider = 0;
+
+    initial begin
+        clk_out = 0; 
+    end
+
+>>>>>>> Stashed changes
     always @(posedge clk_in) begin
         if (clk_divider == 11) begin
             clk_divider <= 0;
