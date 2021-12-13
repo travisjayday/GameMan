@@ -142,7 +142,7 @@ module ppu_top_level(
             scrollY <= 0;
             scrollX <= 0;
         end else if (scroll_up ) begin
-            if (btn_count >= 4_194_304/4) begin 
+            if (btn_count >= 4_194_304/8) begin 
                 mmio_wr <= 1;
                 mmio_din <= scrollY;
                 mmio_a <= 16'hFF42;
@@ -152,7 +152,7 @@ module ppu_top_level(
                 btn_count <= btn_count + 1;
              end 
         end else if (scroll_down ) begin
-            if (btn_count >= 4_194_304/4) begin 
+            if (btn_count >= 4_194_304/8) begin 
                 mmio_wr <= 1;
                 mmio_din <= scrollY;
                 mmio_a <= 16'hFF42;
@@ -162,7 +162,7 @@ module ppu_top_level(
                 btn_count <= btn_count + 1;
              end 
         end else if (scroll_right ) begin
-            if (btn_count >= 4_194_304/4) begin 
+            if (btn_count >= 4_194_304/8) begin 
                 mmio_wr <= 1;
                 mmio_din <= scrollX;
                 mmio_a <= 16'hFF43;
@@ -172,7 +172,7 @@ module ppu_top_level(
                 btn_count <= btn_count + 1;
              end 
         end else if (scroll_left) begin
-            if (btn_count >= 4_194_304/4) begin 
+            if (btn_count >= 4_194_304/8) begin 
                 mmio_wr <= 1;
                 mmio_din <= scrollX;
                 mmio_a <= 16'hFF43;

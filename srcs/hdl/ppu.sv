@@ -200,17 +200,17 @@ module ppu(
     end 
     always_ff @(posedge clk) begin 
         if (rst) begin                   
-                LCDC <= 8'hE7;                    
+                LCDC <= 8'hD3;                    
                 STAT[6:3] <= 0;
-                SCY <= 8'h08;
+                SCY <= 8'h00;
                 SCX <= 0;
                 LYC <= 0;
                 DMA <= 0;
-                BGP <= 8'hE1;
-                OBP0 <= 8'hE0;
-                OBP1 <= 8'hD0;
-                WX <= 8'h07;
-                WY <= 8'h88;
+                BGP <= 8'hE4;
+                OBP0 <= 8'hE4;
+                OBP1 <= 8'hC4;
+                WX <= 8'h00;
+                WY <= 8'h00;
         end else begin 
             if(mmio_wr) begin 
                 case(mmio_a) 
