@@ -30,13 +30,13 @@ module mode_3_fsm(
         output logic [15:0] vram_a,
         output logic [7:0]  vram_din,
         output logic        vram_wr, 
-//        //OAM Data Bus, 0xFE00 - 0xFE9F 
-//        input  wire  [7:0]  oam_dout,
-//        output logic [15:0] oam_a,
-//        output logic [7:0]  oam_din,
-//        output logic        oam_wr, 
+        //OAM Data Bus, 0xFE00 - 0xFE9F 
+        input  wire  [7:0]  oam_dout,
+        output logic [15:0] oam_a,
+        output logic [7:0]  oam_din,
+        output logic        oam_wr, 
         //SPRITE QUEUE
-        input wire [9:0][47:0] sprite_queue ,
+        input wire [9:0][39:0] sprite_queue ,
         // REGISTERS
         input wire [7:0] LCDC,
         input wire [7:0] SCX,
@@ -89,7 +89,7 @@ module mode_3_fsm(
             //VRAM DATA BUS, 0x8000 - 0x9FFF 
             .vram_dout(vram_dout), .vram_a(vram_a), .vram_din(vram_din), .vram_wr(vram_wr), 
             //OAM Data Bus, 0xFE00 - 0xFE9F 
-            //.oam_dout(oam_dout), .oam_a(oam_a), .oam_din(oam_din), .oam_wr(oam_wr),
+             .oam_dout(oam_dout), .oam_a(oam_a), .oam_din(oam_din), .oam_wr(oam_wr),
             //INPUT FOR SPRITE
             .sprite_queue(sprite_queue),
             //DEBUG
