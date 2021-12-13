@@ -196,9 +196,9 @@ module renderer(
         if (sprite_valid_in && bg_window_valid_in) begin
             case(bg_window_pixel_in[5:4]) 
                 2'd0 : begin  //index 0 
-                            if (BGP[1:0] > 0 && sprite_pixel_in[0]) begin
-                                pixel_out = BGP[1:0];
-                            end else begin
+//                            if (BGP[1:0] > 0 && sprite_pixel_in[0]) begin
+//                                pixel_out = BGP[1:0];
+//                            end else begin
                                 if (sprite_pixel_in[1]) begin
                                     case(sprite_pixel_in[5:4]) 
                                         2'd0 : pixel_out = BGP[1:0];
@@ -214,10 +214,10 @@ module renderer(
                                         2'd3 : pixel_out = OBP0[7:6];
                                     endcase 
                                 end
-                            end             
+                            //end             
                         end
                 2'd1 : begin 
-                           if (BGP[3:2] > 0 && sprite_pixel_in[0]) begin
+                           if (sprite_pixel_in[0]) begin
                                 pixel_out = BGP[3:2];
                             end else begin
                                 if (sprite_pixel_in[1]) begin
@@ -238,7 +238,7 @@ module renderer(
                             end  
                        end
                 2'd2 : begin
-                            if (BGP[5:4] > 0 && sprite_pixel_in[0]) begin
+                            if (sprite_pixel_in[0]) begin
                                 pixel_out = BGP[5:4];
                             end else begin
                                 if (sprite_pixel_in[1]) begin
@@ -259,7 +259,7 @@ module renderer(
                             end  
                        end
                 2'd3 : begin 
-                            if (BGP[7:6] > 0 && sprite_pixel_in[0]) begin
+                            if (sprite_pixel_in[0]) begin
                                 pixel_out = BGP[7:6];
                             end else begin
                                 if (sprite_pixel_in[1]) begin
