@@ -136,13 +136,18 @@ def run_xsim_program(prog_file, only_select=False):
     gb.load_from_simdump(xsim_dir + 'simdump.hex')
     return gb
 
+def gb_from_simdump():
+    gb = GameBoyState()
+    gb.load_from_simdump(xsim_dir + 'simdump.hex')
+    return gb
+
 if __name__ == "__main__": 
 
     testall = False
     uts = []
     for prog in os.listdir(prog_dir):
         if not testall: 
-            if prog.startswith('ut_bootrom'):
+            if prog.startswith('ut_mmio_dma_4'):
                 uts.append(prog_dir + prog)
         else:
             if prog.startswith('ut_'):
@@ -155,8 +160,9 @@ if __name__ == "__main__":
         assemble_program(prog_file)
         only_select = False 
         if not only_select:
-            gb_emu = run_emu_as_bootrom(prog_file, debug=True)
+            gb_emu = run_emu_as_bootrom(prog_file, debug=False)
         gb_uut = run_xsim_program(prog_file, only_select=only_select)
+        #gb_uut = gb_from_simdump()
 
         if gb_uut.compare(gb_emu): 
             passed.append(test_dir)

@@ -63,23 +63,29 @@ module ppu(
     logic [11:0] mode_3_cycles;
     
     logic [15:0] mode_2_oam_a;
+    logic [7:0] mode_2_oam_dout, mode_2_oam_din;
+    logic mode_2_oam_wr;
+    
     mode_2_fsm mode_2(
         .clk(clk), .rst(mode_2_start), .start(mode_2_start),.done_out(mode_2_done),
         //OAM Data Bus, 0xFE00 - 0xFE9F 
-        .oam_dout(oam_dout), .oam_a(mode_2_oam_a), .oam_din(oam_din), .oam_wr(oam_wr), 
+        .oam_dout(oam_dout), .oam_a(mode_2_oam_a), .oam_din(mode_2_oam_din), .oam_wr(mode_2_oam_wr), 
         //Registers
         .LCDC(LCDC), .LY(LY),
         //Output Sprites 2 bytes 10 elements 
         .sprite_queue_out(mode_2_sprite_queue), .mode_2_cycles(mode_2_cycles)
     ); 
-   logic [15:0] mode_3_vram_a;
+    
    
+   logic [15:0] mode_3_oam_a, mode_3_vram_a;
+   logic [7:0] mode_3_oam_din, mode_3_vram_din;
+   logic mode_3_oam_wr, mode_3_vram_wr;  
    mode_3_fsm mode_3(
         .clk(clk), .rst(mode_3_start), .start(mode_3_start),.done_out(mode_3_done),
           //VRAM DATA BUS, 0x8000 - 0x9FFF  
-        .vram_dout(vram_dout), .vram_a(mode_3_vram_a), .vram_din(vram_din), .vram_wr(vram_wr), 
+        .vram_dout(vram_dout), .vram_a(mode_3_vram_a), .vram_din(mode_3_vram_din), .vram_wr(mode_3_vram_wr), 
          //OAM Data Bus, 0xFE00 - 0xFE9F 
-        //.oam_dout(oam_dout), .oam_a(oam_a), .oam_din(oam_din), .oam_wr(oam_wr),
+        .oam_dout(oam_dout), .oam_a(mode_3_oam_a), .oam_din(mode_3_oam_din), .oam_wr(mode_3_oam_wr),
         //Registers
         .LCDC(LCDC), .LY(LY),  .SCX(SCX),  .SCY(SCY),  .WX(WX), .WY(WY), .BGP(BGP), .OBP0(OBP0),.OBP1(OBP1),
         //Sprite_queue
@@ -95,13 +101,12 @@ module ppu(
     
     typedef enum {MODE_2, MODE_3, MODE_0, MODE_1} states;
     states state;
-    
-    logic v_interrupt;
+        
     logic [8:0] mode_2_3_time;
     logic [8:0] hsync_count; 
     assign v_count = LY;
     
-
+    logic v_interrupt;
     always_ff @(posedge clk) begin 
         if(rst || start) begin   
             LY <= 0;
@@ -110,8 +115,8 @@ module ppu(
             hsync_count <= 0;
             mode_2_3_time <= 0;
             mode_2_start <= 1;
-            state <= MODE_2;
             v_interrupt <= 0;
+            state <= MODE_2;
         end else begin
             if(LCDC[7]) begin 
                  if (state == MODE_2) begin
@@ -135,8 +140,8 @@ module ppu(
                         mode_2_3_time <= 0;
                         if(LY + 1 > MAX_SCANLINE - 1) begin 
                             vsync <= 1;
-                            hsync_count <= 0;
                             v_interrupt <= 1;
+                            hsync_count <= 0;
                             state <= MODE_1;
                         end else begin 
                             LY <= LY + 1;
@@ -155,12 +160,12 @@ module ppu(
                         vsync <= 0;
                         hsync_count <= 0;
                         mode_2_3_time <= 0;
+
                         mode_2_start <= 1;
-                        
                         state <= MODE_2;
                     end else begin
-                        v_interrupt <= 0;
                         vsync <= 1;
+                        v_interrupt <= 0;
                         if(hsync_count >= SCANLINE_CLOCK - 1 ) begin
                             hsync_count <= 0;
                             LY <= LY + 1;
@@ -197,15 +202,15 @@ module ppu(
         if (rst) begin                   
                 LCDC <= 8'hD3;                    
                 STAT[6:3] <= 0;
-                SCY <= 0;
+                SCY <= 8'h00;
                 SCX <= 0;
                 LYC <= 0;
                 DMA <= 0;
-                BGP <= 8'hFC;
-                OBP0 <= 8'hFF;
-                OBP1 <= 8'hFF;
-                WX <= 0;
-                WY <= 0;
+                BGP <= 8'hE4;
+                OBP0 <= 8'hE4;
+                OBP1 <= 8'hC4;
+                WX <= 8'h00;
+                WY <= 8'h00;
         end else begin 
             if(mmio_wr) begin 
                 case(mmio_a) 
@@ -249,7 +254,7 @@ module ppu(
                             (interrupt_mode2 & STAT[5]) | 
                             (interrupt_mode1 & STAT[4]) | 
                             (interrupt_mode0 & STAT[3]);
-    assign vblank_interrupt = v_interrupt;
+    assign vblank_interrupt = interrupt_mode1;
     // Ask Ahmad?
     states last_state; 
     always @(posedge clk) begin last_state <= state; end
@@ -261,31 +266,26 @@ module ppu(
     assign STAT[7] = 1;
     always_comb begin
         case(state)
-            MODE_0 : STAT[1:0] = 2'b00;
-            MODE_1 : STAT[1:0] = 2'b01;
-            MODE_2 : STAT[1:0] = 2'b10;
-            MODE_3 : STAT[1:0] = 2'b11;
-        endcase 
-    end 
-    always_comb begin
-        case(state)
-            MODE_0 : begin 
+            MODE_0 : begin
+                        STAT[1:0] = 2'b00; 
                         oam_a = 16'hFFFF;
                         vram_a = 16'hFFFF;
                      end
             MODE_1 : begin 
                         oam_a = 16'hFFFF;
                         vram_a = 16'hFFFF;
+                        STAT[1:0] = 2'b01;
                      end 
-            MODE_2 : begin
+            MODE_2 : begin 
                         oam_a = mode_2_oam_a;
                         vram_a = 16'hFFFF;
+                        STAT[1:0] = 2'b10;
                      end
-
-            MODE_3 : begin
-                        oam_a = mode_2_oam_a;
+            MODE_3 : begin 
+                        oam_a = mode_3_oam_a;
                         vram_a = mode_3_vram_a;
-                     end 
+                        STAT[1:0] = 2'b11;
+                     end
         endcase 
     end 
     

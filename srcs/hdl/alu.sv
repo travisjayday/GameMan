@@ -155,11 +155,11 @@ function [11:0] alu_op8;
             end
             ALU_OP_SRA: begin
                 out = { dst[7], dst[7:1] };
-                f.Z = out == 0; f.C = 0; f.N = 0; f.H = 0; 
+                f.Z = out == 0; f.C = dst[0]; f.N = 0; f.H = 0; 
             end
             ALU_OP_SRL: begin
                 out = { 1'b0, dst[7:1] };
-                f.Z = out == 0; f.C = 0; f.N = 0; f.H = 0; 
+                f.Z = out == 0; f.C = dst[0]; f.N = 0; f.H = 0; 
             end
             ALU_OP_SWAP: begin
                 out = { dst[3:0], dst[7:4] };
@@ -198,6 +198,7 @@ function [19:0] alu_op16;
     input wire[15:0] src;    // src (constant may come from register)
     logic[15:0] out;         // output written to dst
     logic[7:0] tmp;
+    logic[11:0] tmp2;
     flags_s f; 
     begin 
         f = flags;
@@ -214,7 +215,7 @@ function [19:0] alu_op16;
             ALU_OP_ADD: begin
                 {f.C, out} = dst + src; 
                 f.N = 0; 
-                f.H = (((dst[15:8] & 4'hf) + (src[15:8] & 4'hf)) & 8'h10) == 8'h10 ? 1 : 0;
+                {f.H, tmp2} = dst[11:0] + src[11:0];
             end
             ALU_SIGNED_OFFSET8: begin
                 f.Z = 0;

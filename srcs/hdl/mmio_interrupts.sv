@@ -8,7 +8,7 @@ module mmio_interrupts_m import cpu_defs::*;(
     /* Ouput for each register */
     always_comb begin
         case (req.addr_select) 
-            16'hFF05: req.read_out = IF; 
+            16'hFF0F: req.read_out = IF; 
             16'hFFFF: req.read_out = IE;
             default:  req.read_out = 8'haa;
         endcase

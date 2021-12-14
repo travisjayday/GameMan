@@ -55,7 +55,7 @@ module vga_master(
     assign pixel_black = doutb;
    
     logic pixel_valid;
-    assign pixel_valid = (hcount < 587) && (hcount > 53)  && (vcount < 480);
+    assign pixel_valid = (hcount < 587) && (hcount > 54)  && (vcount < 480);
                             
     assign pixel_data = pixel_valid ? pixel_black : 2'b11;
 

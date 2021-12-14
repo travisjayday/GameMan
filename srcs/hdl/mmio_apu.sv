@@ -233,8 +233,6 @@ module mmio_apu_m(
         end
     end
 
-
-
 endmodule
 
 //PWM generator for audio generation!

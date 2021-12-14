@@ -30,13 +30,13 @@ module mode_3_fsm(
         output logic [15:0] vram_a,
         output logic [7:0]  vram_din,
         output logic        vram_wr, 
-//        //OAM Data Bus, 0xFE00 - 0xFE9F 
-//        input  wire  [7:0]  oam_dout,
-//        output logic [15:0] oam_a,
-//        output logic [7:0]  oam_din,
-//        output logic        oam_wr, 
+        //OAM Data Bus, 0xFE00 - 0xFE9F 
+        input  wire  [7:0]  oam_dout,
+        output logic [15:0] oam_a,
+        output logic [7:0]  oam_din,
+        output logic        oam_wr, 
         //SPRITE QUEUE
-        input wire [9:0][47:0] sprite_queue ,
+        input wire [9:0][39:0] sprite_queue ,
         // REGISTERS
         input wire [7:0] LCDC,
         input wire [7:0] SCX,
@@ -89,7 +89,7 @@ module mode_3_fsm(
             //VRAM DATA BUS, 0x8000 - 0x9FFF 
             .vram_dout(vram_dout), .vram_a(vram_a), .vram_din(vram_din), .vram_wr(vram_wr), 
             //OAM Data Bus, 0xFE00 - 0xFE9F 
-            //.oam_dout(oam_dout), .oam_a(oam_a), .oam_din(oam_din), .oam_wr(oam_wr),
+             .oam_dout(oam_dout), .oam_a(oam_a), .oam_din(oam_din), .oam_wr(oam_wr),
             //INPUT FOR SPRITE
             .sprite_queue(sprite_queue),
             //DEBUG
@@ -195,29 +195,25 @@ module renderer(
         write_out = bg_window_valid_in || sprite_valid_in;
         if (sprite_valid_in && bg_window_valid_in) begin
             case(bg_window_pixel_in[5:4]) 
-                2'd0 : begin  //index 0 
-                            if (BGP[1:0] > 0 && sprite_pixel_in[0]) begin
-                                pixel_out = BGP[1:0];
+                2'd0 : begin  
+                            if (sprite_pixel_in[1]) begin
+                                case(sprite_pixel_in[5:4]) 
+                                    2'd0 : pixel_out = BGP[1:0];
+                                    2'd1 : pixel_out = OBP1[3:2];
+                                    2'd2 : pixel_out = OBP1[5:4];
+                                    2'd3 : pixel_out = OBP1[7:6];
+                                endcase 
                             end else begin
-                                if (sprite_pixel_in[1]) begin
-                                    case(sprite_pixel_in[5:4]) 
-                                        2'd0 : pixel_out = BGP[1:0];
-                                        2'd1 : pixel_out = OBP1[3:2];
-                                        2'd2 : pixel_out = OBP1[5:4];
-                                        2'd3 : pixel_out = OBP1[7:6];
-                                    endcase 
-                                end else begin
-                                     case(sprite_pixel_in[5:4]) 
-                                        2'd0 : pixel_out = BGP[1:0];
-                                        2'd1 : pixel_out = OBP0[3:2];
-                                        2'd2 : pixel_out = OBP0[5:4];
-                                        2'd3 : pixel_out = OBP0[7:6];
-                                    endcase 
-                                end
-                            end             
+                                 case(sprite_pixel_in[5:4]) 
+                                    2'd0 : pixel_out = BGP[1:0];
+                                    2'd1 : pixel_out = OBP0[3:2];
+                                    2'd2 : pixel_out = OBP0[5:4];
+                                    2'd3 : pixel_out = OBP0[7:6];
+                                endcase 
+                            end          
                         end
                 2'd1 : begin 
-                           if (BGP[3:2] > 0 && sprite_pixel_in[0]) begin
+                           if (sprite_pixel_in[0]) begin
                                 pixel_out = BGP[3:2];
                             end else begin
                                 if (sprite_pixel_in[1]) begin
@@ -238,7 +234,7 @@ module renderer(
                             end  
                        end
                 2'd2 : begin
-                            if (BGP[5:4] > 0 && sprite_pixel_in[0]) begin
+                            if (sprite_pixel_in[0]) begin
                                 pixel_out = BGP[5:4];
                             end else begin
                                 if (sprite_pixel_in[1]) begin
@@ -259,7 +255,7 @@ module renderer(
                             end  
                        end
                 2'd3 : begin 
-                            if (BGP[7:6] > 0 && sprite_pixel_in[0]) begin
+                            if (sprite_pixel_in[0]) begin
                                 pixel_out = BGP[7:6];
                             end else begin
                                 if (sprite_pixel_in[1]) begin

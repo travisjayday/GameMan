@@ -8,7 +8,7 @@ module decoder_m import cpu_defs::*; (
     input wire rst,
     input wire[7:0] inst,
     input flags_s flags,
-    input wire[7:0] IF,
+    input wire[7:0] active_IF,
     output decoded_action_s decoded_action
 );
 
@@ -25,6 +25,9 @@ module decoder_m import cpu_defs::*; (
 
     // previous instruction. used sometimes. (see pop)
     logic[7:0] prev_inst; 
+
+    // used for fetching data from stack in one instruciton
+    logic[7:0] tmp_const;
     
     /* 
         Temproary combinational variable that contains the currently
@@ -47,11 +50,11 @@ module decoder_m import cpu_defs::*; (
             // If we're starting a new instruction and an interrupt needs to be
             // serviced, service that interrupt
 
-            if (current_isr || (cycles_left == 0 && IF != 0 && prev_inst != 8'hCB)) begin
-                if      (current_isr[0]||IF[0]) CALL_ISR(8'h40, 8'b1111_1110); // Vsync ISR
-                else if (current_isr[1]||IF[1]) CALL_ISR(8'h48, 8'b1111_1101); // LCD Stat ISR
-                else if (current_isr[2]||IF[2]) CALL_ISR(8'h50, 8'b1111_1011); // Timer ISR
-                else if (current_isr[4]||IF[4]) CALL_ISR(8'h60, 8'b1110_1111); // Joypad ISR
+            if (current_isr || (cycles_left == 0 && active_IF != 0 && prev_inst != 8'hCB)) begin
+                if      (current_isr[0]||active_IF[0]) CALL_ISR(8'h40, 8'b1111_1110); // Vsync ISR
+                else if (current_isr[1]||active_IF[1]) CALL_ISR(8'h48, 8'b1111_1101); // LCD Stat ISR
+                else if (current_isr[2]||active_IF[2]) CALL_ISR(8'h50, 8'b1111_1011); // Timer ISR
+                else if (current_isr[4]||active_IF[4]) CALL_ISR(8'h60, 8'b1110_1111); // Joypad ISR
                 else begin
                     $display("CPU trying to execute unkown ISR...");
                     $finish();
@@ -218,7 +221,8 @@ module decoder_m import cpu_defs::*; (
     endcase endtask 
 
     task ROW4; input logic [3:0] col; case (col)
-        4'h0: BREAKPOINT();                           // LD B, B
+        //4'h0: BREAKPOINT();                           // LD B, B
+        4'h0: LD_REG8_REG8(REG_B, REG_B);                           // LD B, B
         4'h1: LD_REG8_REG8(REG_B, REG_C);                           // LD B, C
         4'h2: LD_REG8_REG8(REG_B, REG_D);                           // LD B, D
         4'h3: LD_REG8_REG8(REG_B, REG_E);                           // LD B, E

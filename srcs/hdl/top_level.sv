@@ -24,7 +24,8 @@ module top_level import cpu_defs::*;(
     reg_file_s regs_out;
   
     logic clk_4mhz; 
-    clk_gen _clk_gen(clk_100mhz, clk_4mhz);
+    clk_wiz_1 _25mhz_to_4mhz(.clk_in1(vclock), .clk_out1(clk_4mhz));
+    //assign clk_4mhz = clk_100mhz; /* Cracked clock */
 
     mem_if ppu_oam_if();    // Busmaster 2
     mem_if ppu_vram_if();   // Busmaster 3
@@ -34,21 +35,20 @@ module top_level import cpu_defs::*;(
     mem_if nop(); 
 
     mem_if rom_if(); 
-    bram_32k_rom_m rom(clk_4mhz, nop);
-
-    cart_if cart(
-                    .clk(clk_4mhz),
-                    .rst(rst),
-                    .rom_if(rom_if),
-                    
-                    .clk_out(jc[4]),
-                    .n_rst_out(jc[0]),
-                    .n_write_enable_out(jc[3]),
-                    .n_read_enable_out(jc[2]),
-                    .n_cs_out(jc[1]),
-                    .addr_out({jd,jb}),
-                    .data_out(ja)
-                    );
+    bram_32k_rom_m rom(clk_4mhz, rom_if);
+    /*cart_if cart(
+                .clk(clk_4mhz),
+                .rst(rst),
+                .rom_if(rom_if),
+                
+                .clk_out(jc[4]),
+                .n_rst_out(jc[0]),
+                .n_write_enable_out(jc[3]),
+                .n_read_enable_out(jc[2]),
+                .n_cs_out(jc[1]),
+                .addr_out({jd,jb}),
+                .data_out(ja)
+                );*/
 
     // WRAM: Size 8KB
     mem_if wram_if(); 
@@ -99,7 +99,6 @@ module top_level import cpu_defs::*;(
     mem_if mmio_joypad_if();
     mmio_joypad_m joypad(clk_4mhz, rst, je, mmio_joypad_if);
 
-    assign led = regs_out.PC;
 
     // PPU
     mem_if mmio_ppu_if();      
@@ -172,6 +171,8 @@ module top_level import cpu_defs::*;(
 
     // CPU 
     logic cpu_died;
+
+    assign led = {8'b0, joypad.out_reg}; //regs_out.PC;
     cpu_m cpu(
         .clk(clk_4mhz), 
         .rst(rst), 

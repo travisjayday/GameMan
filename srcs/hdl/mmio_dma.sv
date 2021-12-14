@@ -91,6 +91,7 @@ module mmio_dma_m(
                         if (dma_dst_addr == 16'hFEA0) begin 
                             // After 160 bytes, dma is done
                             dma_req.addr_select <= 16'hFFFF; 
+                            dma_src_addr_lo <= 0; 
                         end else begin
                             // Else read next byte
                             dma_src_addr_lo <= dma_src_addr_lo + 1; 

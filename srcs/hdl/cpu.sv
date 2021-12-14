@@ -53,7 +53,7 @@ module cpu_m import cpu_defs::*;(
     // Instruction is always the output of MMU
     assign inst = mmu.read_out;
     decoded_action_s decoded_action;
-    decoder_m decoder(clk, rst, inst, flags, interrupt_happening? regs.IF : 8'b00, decoded_action);
+    decoder_m decoder(clk, rst, inst, flags, interrupt_happening? (regs.IF & regs.IE) : 8'b00, decoded_action);
 
     // Main state for CPU FSM
     cpu_state_t cpu_state;
@@ -153,7 +153,7 @@ module cpu_m import cpu_defs::*;(
 
                         // set IF=new IF
                         mmu.addr_select <= 16'hFF0F;
-                        mmu.write_value <= decoded_action.src;
+                        mmu.write_value <= mmio_reg_IF & decoded_action.src;
                         mmu.write_enable <= 1'b1;
                     end
                     WRITE_MEM8_REG8: begin

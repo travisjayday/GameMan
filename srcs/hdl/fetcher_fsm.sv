@@ -43,8 +43,8 @@ module fetcher_fsm(
     input wire [7:0] WX, 
     input wire [7:0] WY,
     //OAM QUEUE 
-    //{16'b Addr, 8'bY, 8'bX, 8'bTile Index, 8'bFlags}
-    input wire [9:0][47:0] sprite_queue ,
+    //{16'b Addr, 8'bY, 8'bX, 8'bFlags}
+    input wire [9:0][39:0] sprite_queue ,
     //INPUT FROM FIFO
     input wire bg_window_fifo_empty,
     input wire sprite_fifo_empty,
@@ -68,7 +68,7 @@ module fetcher_fsm(
     parameter SLEEP_CYCLES = 1;
     
     parameter OAM_START = 16'hFE00;
-    parameter OAM_END = 16'hFE9C;
+    parameter OAM_END = 16'hFE9F;
     
     parameter PIXELS_PER_TILE = 8;
     parameter MAX_SPRITE = 10;
@@ -100,7 +100,7 @@ module fetcher_fsm(
     /*SPRITE PIXEL FSM LOGIC */
     logic [7:0][5:0] pixel_row_sprite;
     logic [9:0][7:0][5:0] pixel_rows_sprite;
-    logic [9:0][51:0] sprites_on_curr_tile;
+    logic [9:0][43:0] sprites_on_curr_tile;
     logic sprite_on_curr_tile;
     logic [7:0] sprite_tile_0_data, sprite_tile_1_data;   
     logic [3:0] sprite_index, sprite_i; 
@@ -111,13 +111,13 @@ module fetcher_fsm(
     
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //Gets Queue of Sprites on Current Tile 
-    logic [9:0][51:0] input_queue;
+    logic [9:0][43:0] input_queue;
     always_comb begin     
         for(int i = 0; i < MAX_SPRITE; i++) begin
-           if (((tilemapX + 1) << 3) <= sprite_queue[i][23:16] && ((tilemapX + 2)  << 3) > sprite_queue[i][23:16])  begin               
-                input_queue[i] = { (sprite_queue[i][23:16] & 8'h07), 1'b0, sprite_queue[i][47:0]};
-           end else if ((tilemapX << 3) < sprite_queue[i][23:16] && ((tilemapX +1) << 3) >= sprite_queue[i][23:16]) begin                
-                input_queue[i] = { (sprite_queue[i][23:16] & 8'h07), 1'b1, sprite_queue[i][47:0]};
+           if (((tilemapX + 1) << 3) <= sprite_queue[i][15:8] && ((tilemapX + 2)  << 3) > sprite_queue[i][15:8])  begin               
+                input_queue[i] = { (sprite_queue[i][15:8] & 8'h07), 1'b0, sprite_queue[i][39:0]};
+           end else if ((tilemapX << 3) < sprite_queue[i][15:8] && ((tilemapX +1) << 3) >= sprite_queue[i][15:8]) begin                
+                input_queue[i] = { (sprite_queue[i][15:8] & 8'h07), 1'b1, sprite_queue[i][39:0]};
            end else begin
                 input_queue[i] = 0;
            end  
@@ -136,11 +136,11 @@ module fetcher_fsm(
         );   
         
     sprite_fetcher_vram_a get_vram_a(.LCDC(LCDC), .LY(LY),
-            .sprite_queue_in(sprites_on_curr_tile), .index(sprite_i),
+            .sprite_queue_in(sprites_on_curr_tile), .index(sprite_i), .tile_index(oam_dout),
             .vram_a_out(fetcher_vram_out)
             );
     logic [2:0] sprite_shift;    
-    assign sprite_shift = sprites_on_curr_tile[sprite_index][51:49];
+    assign sprite_shift = sprites_on_curr_tile[sprite_index][43:41];
     ///////////////////////////////////////////////////////////////////////////////////////
     always_comb begin 
         current_tile_in_window = (WX - 7 <= ((tilemapX) << 3) && WX - 7 + MAX_X >= ((tilemapX )<< 3)) && (WY <= LY);
@@ -161,7 +161,8 @@ module fetcher_fsm(
             
             done_out <= 0;          
             //INTERNAL LOGIC     
-            //shift_start <= 1;       
+            shift_start <= 0;       
+
             tile_0_data <= 0;
             tile_1_data <= 0;
             tilemapX <= 0;
@@ -170,8 +171,8 @@ module fetcher_fsm(
             sprite_index <= 0;
             sprite_i <= 0;
             valid_sprite_row <= 0;
-            for (int i = 0;i < 10 ;i++) begin
-                for (int j  =0;j < 8; j++) begin
+            for (int i = 0; i < 10; i++) begin
+                for (int j = 0; j < 8; j++) begin
                     pixel_rows_sprite[i][j] <= {6'b0};
                 end 
             end
@@ -199,14 +200,17 @@ module fetcher_fsm(
                             end 
                         end
                         state_count <= 0;
+                        shift_start <= 1; 
                         state <= get_tile;   
                     end else begin 
                         state_count <= state_count + 1; 
                     end 
             end else if (state == get_tile) begin
+                    shift_start <= 0; 
                     if (state_count == GET_TILE_CYCLES - 1) begin                        
-                        shift_start <= 0; 
+                        
                         state_count <= 0; 
+                        
                         state <= get_tile_data_low;
                     end else begin ;
                         if(LCDC[4]) begin
@@ -218,7 +222,7 @@ module fetcher_fsm(
                                 vram_a <=  16'h9000 + ((vram_dout) << 4 ) + ((fetcherY[2:0]) << 1);
                             end 
                         end
-                        shift_start <= 1; 
+                        //shift_start <= 1; 
                         state_count <= state_count + 1;
                     end
             end else if (state == get_tile_data_low) begin
@@ -239,7 +243,9 @@ module fetcher_fsm(
                             end else if(LCDC[0]) begin
                                 vram_a <= ((LCDC[3]) ? 16'h9C00 : 16'h9800) + fetcherX_next + ((fetcherY_next >> 3) << 5);
                             end                            
-                        end
+                        end else begin 
+                            oam_a <= sprites_on_curr_tile[0][39:24] + 16'h02;
+                        end 
                         state_count <= 0;
                         state <= sleep; 
                     end else begin  
@@ -266,7 +272,8 @@ module fetcher_fsm(
                         if (sprite_on_curr_tile && LCDC[1]) begin 
                             sprite_index <= 0;
                             sprite_i <= 0;
-                            vram_a <= fetcher_vram_out;
+                            //vram_a <= fetcher_vram_out;
+                            //oam_a <= sprites_on_curr_tile[sprite_index][39:24] + 16'h02;
                             for (int i = 0;i < 10 ;i++) begin
                                 for (int j  =0;j < 8; j++) begin
                                     pixel_rows_sprite[i][j] <= {6'b0};
@@ -280,7 +287,7 @@ module fetcher_fsm(
                                 done_out <= 1;
                                 state <= done;
                             end else begin 
-                                //shift_start <= 1; 
+                                shift_start <= 1; 
                                 tilemapX <= tilemapX + 1;
                                 state <= get_tile;
                             end 
@@ -294,20 +301,20 @@ module fetcher_fsm(
             end else if (state == sprite_get_tile) begin 
                     if(state_count == 1) begin
                         state_count <= 0;
-                        
                         state <= sprite_get_tile_data_low;
                     end else begin
+                        vram_a <= fetcher_vram_out;
                         state_count <= state_count + 1;
                     end 
             
             end else if (state == sprite_get_tile_data_low) begin
                     if(state_count == 1) begin
-                        state_count <= 0;
+                        state_count <= 0; 
                         sprite_tile_0_data <= vram_dout;
                         state <= sprite_get_tile_data_high;
                     end else begin
-                        state_count <= state_count + 1;
                         vram_a <= vram_a + 1;
+                        state_count <= state_count + 1;
                     end 
                     
             end else if (state == sprite_get_tile_data_high) begin
@@ -315,7 +322,7 @@ module fetcher_fsm(
                         state_count <= 0;
                         sprite_tile_1_data <= vram_dout;
                         state <= sprite_sleep;
-                        if (! (sprites_on_curr_tile[sprite_index + 1][47:32] >= OAM_START &&  sprites_on_curr_tile[sprite_index + 1][47:32] < OAM_END) ) begin
+                        if (! (sprites_on_curr_tile[sprite_index + 1][39:24] >= OAM_START &&  sprites_on_curr_tile[sprite_index + 1][39:24] < OAM_END) ) begin
                             if (LCDC[5] && current_tile_almost_in_window) begin 
                                 vram_a <= ((LCDC[6]) ? 16'h9C00 : 16'h9800) + fetcherX_next + ((fetcherY_next >> 3) << 5);
                             end else if(LCDC[0]) begin
@@ -325,20 +332,17 @@ module fetcher_fsm(
                             sprite_i <= 0;
                         end else begin
                             sprite_i <= sprite_i  + 1;
+                            oam_a <= sprites_on_curr_tile[sprite_index + 1][39:24] + 16'h02;
                         end 
                     end else begin
                         state_count <= state_count + 1;
-                       
                     end
             end else if (state == sprite_sleep )begin 
                     if (state_count == 0) begin  
                         state_count <= 0;
                         state <= sprite_push; 
-
                     end else begin  
                         state_count <= state_count + 1;
-                        
-                        
                     end 
             end else if(state == sprite_push)  begin 
                     valid_bg_window_row <= 0;
@@ -346,23 +350,23 @@ module fetcher_fsm(
                           
                     if(sprites_on_curr_tile[sprite_index][5]) begin 
                         for(int i = 0; i < 8 ; i++) begin 
-                            if(sprites_on_curr_tile[sprite_index][48]) begin
+                            if(sprites_on_curr_tile[sprite_index][40]) begin
                                 if (7 - i >= sprite_shift) begin
                                     pixel_rows_sprite[sprite_index][i] <= {6'b0};
                                 end else begin 
-                                    pixel_rows_sprite[sprite_index][i] <=  {sprite_tile_1_data[(7 - i) + (8 - sprite_shift)],sprite_tile_0_data[(7 - i) + (8 - sprite_shift)], 2'b0 ,sprites_on_curr_tile[sprite_index][4] , sprites_on_curr_tile[sprite_index][7]};
+                                    pixel_rows_sprite[sprite_index][i] <=  {sprite_tile_1_data[(7 - i) + (8 - sprite_shift)], sprite_tile_0_data[(7 - i) + (8 - sprite_shift)], 2'b0 ,sprites_on_curr_tile[sprite_index][4] , sprites_on_curr_tile[sprite_index][7]};
                                 end        
                             end else begin 
                                 if (7 - i < sprite_shift) begin 
                                     pixel_rows_sprite[sprite_index][i] <= {6'b0};
                                 end else begin 
-                                     pixel_rows_sprite[sprite_index][i] <=  {sprite_tile_1_data[(7 - sprite_shift) - i],sprite_tile_0_data[(7 - sprite_shift) - i], 2'b0 ,sprites_on_curr_tile[sprite_index][4] , sprites_on_curr_tile[sprite_index][7]};                                  
+                                     pixel_rows_sprite[sprite_index][i] <=  {sprite_tile_1_data[(7 - sprite_shift) - i], sprite_tile_0_data[(7 - sprite_shift) - i], 2'b0 ,sprites_on_curr_tile[sprite_index][4] , sprites_on_curr_tile[sprite_index][7]};                                  
                                 end
                             end 
                         end
                     end else begin
                         for(int i = 0; i < 8; i++) begin 
-                            if(sprites_on_curr_tile[sprite_index][48]) begin
+                            if(sprites_on_curr_tile[sprite_index][40]) begin
                                 if (7 - i >= sprite_shift) begin
                                     pixel_rows_sprite[sprite_index][i] = 0;
                                 end else begin 
@@ -379,10 +383,11 @@ module fetcher_fsm(
                     end 
     
     
-                    if ( sprites_on_curr_tile[sprite_index + 1][47:32] >= OAM_START &&  sprites_on_curr_tile[sprite_index + 1][47:32] < OAM_END) begin 
+                    if ( sprites_on_curr_tile[sprite_index + 1][39:24] >= OAM_START &&  sprites_on_curr_tile[sprite_index + 1][39:24] < OAM_END) begin 
                         sprite_index <= sprite_index + 1;
                         
-                        vram_a <= fetcher_vram_out;
+                        //vram_a <= fetcher_vram_out;
+                        //oam_a <= sprites_on_curr_tile[sprite_index][39:24] + 16'h02;
                         state <= sprite_get_tile;
                     end else begin 
                         sprite_index <= 0;
@@ -392,7 +397,7 @@ module fetcher_fsm(
                             done_out <= 1;
                             state <= done;
                         end else begin 
-                            //shift_start <= 1; 
+                            shift_start <= 1; 
                             tilemapX <= tilemapX + 1;
                             state <= get_tile;
                         end 
@@ -522,42 +527,44 @@ assign oam_wr = 0;
 assign vram_wr = 0;
 assign oam_din = 0;
 assign vram_din = 0;
-assign oam_a = 0;
+//assign oam_a = 0;
 //Debug Ports
 logic [7:0] bg_tile_x;
 assign bg_tile_x = LX >> 3;
 logic [7:0] sprite_tile_y;
-assign sprite_tile_y = (LY - (sprites_on_curr_tile[sprite_index][31:24] - 16));
+assign sprite_tile_y = (LY - (sprites_on_curr_tile[sprite_i][31:24] - 16));
+
 
 endmodule
 
 module sprite_fetcher_vram_a(
     input wire [7:0] LCDC,
     input wire [7:0] LY,
-    input wire [9:0][51:0]sprite_queue_in ,
+    input wire [7:0] tile_index,
+    input wire [9:0][43:0]sprite_queue_in ,
     input wire [3:0] index, 
     output logic [15:0] vram_a_out
 );
-always_comb begin
-    if(LCDC[2]) begin
-            if(sprite_queue_in[index][6]) begin
-                if( 0 <= (LY - (sprite_queue_in[index][31:24] - 16)) && (LY - (sprite_queue_in[index][31:24] - 16)) < 7) begin
-                    vram_a_out = 16'h8000 + ((sprite_queue_in[index][15:8] + 1) << 4) + (( 7 - (LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);
-                end else begin 
-                    vram_a_out = 16'h8000 + ((sprite_queue_in[index][15:8]) << 4) + ((7 - (LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);
+    always_comb begin
+        if(LCDC[2]) begin
+                if(sprite_queue_in[index][6]) begin
+                    if( ((LY - (sprite_queue_in[index][23:16] - 16)) >= 0) && ((LY - (sprite_queue_in[index][23:16] - 16)) < 8)) begin
+                        vram_a_out = 16'h8000 + ((tile_index + 1) << 4) + (( 7 - (LY - (sprite_queue_in[index][23:16] - 16)) & 8'h07) << 1);
+                    end else begin 
+                        vram_a_out = 16'h8000 + (tile_index << 4) + ((7 - (LY - (sprite_queue_in[index][23:16] - 16)) & 8'h07) << 1);
+                    end 
+                end else begin
+                    if( ((LY - (sprite_queue_in[index][23:16] - 16)) >= 0) &&  ((LY - (sprite_queue_in[index][23:16] - 16)) < 8)) begin
+                        vram_a_out = 16'h8000 + (tile_index << 4) + (((LY - (sprite_queue_in[index][23:16] - 16)) & 8'h07) << 1);
+                    end else begin 
+                        vram_a_out = 16'h8000 + ((tile_index + 1) << 4) + (((LY - (sprite_queue_in[index][23:16] - 16)) & 8'h07) << 1);
+                    end 
                 end 
-            end else begin
-                if( 0 <= (LY - (sprite_queue_in[index][31:24] - 16)) && (LY - (sprite_queue_in[index][31:24] - 16)) < 7) begin
-                    vram_a_out = 16'h8000 + ((sprite_queue_in[index][15:8]) << 4) + (((LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);
-                end begin 
-                    vram_a_out = 16'h8000 + ((sprite_queue_in[index][15:8] + 1) << 4) + (((LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);
-                end 
-            end 
         end else begin
             if(sprite_queue_in[index][6]) begin
-                vram_a_out = 16'h8000 + (sprite_queue_in[index][15:8] << 4) + (( 7 - (LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);                
+                vram_a_out = 16'h8000 + (tile_index << 4) + (( 7 - (LY - (sprite_queue_in[index][23:16] - 16)) & 8'h07) << 1);                
             end else begin
-                vram_a_out = 16'h8000 + (sprite_queue_in[index][15:8] << 4) + (( (LY - (sprite_queue_in[index][31:24] - 16)) & 8'h07) << 1);
+                vram_a_out = 16'h8000 + (tile_index << 4) + (( (LY - (sprite_queue_in[index][23:16] - 16)) & 8'h07) << 1);
             end 
         end 
     end 
@@ -568,20 +575,34 @@ module pipeline_queue_shift (
         input wire rst, 
         input wire start,
         output logic done_out,
-        input wire [9:0][51:0] q_in,
-        output logic [9:0][51:0] q_out
+        input wire [9:0][43:0] q_in,
+        output logic [9:0][43:0] q_out
     );
     
     logic [3:0] count, index;
-
     always_ff @(posedge clk) begin
         if(start || rst) begin 
-            count <= 0;
-            index <= 0;
+            index <= 2;
             done_out <= 0;
-            q_out <= '{default:'0};
+            if(q_in[0] != 0 && q_in[1] != 0) begin 
+                q_out[0] <= q_in[0];
+                q_out[1] <= q_in[1];  
+                for(int i = 2; i < 10; i++) begin q_out[i] <= 0; end 
+                count <=  2;   
+            end else if (q_in[0] != 0) begin
+                q_out[0] <= q_in[0];
+                for(int i = 1; i < 10; i++) begin q_out[i] <= 0; end 
+                count <= 1;
+            end else if (q_in[1] != 0) begin 
+                q_out[0] <= q_in[1];
+                for(int i = 1; i < 10; i++) begin q_out[i] <= 0; end 
+                count <= 1;
+            end else begin
+                for(int i = 0; i < 10; i++) begin q_out[i] <= 0; end 
+                count <= 0;
+            end
         end else begin 
-            if(index < 8 && !done_out) begin 
+            if(index <= 8 && !done_out) begin 
                 index <= index + 2;
                 if(q_in[index] != 0 && q_in[index + 1] != 0) begin 
                     q_out[count] <= q_in[index];
