@@ -1310,6 +1310,17 @@ begin `SINGLE_MACHINE_CYCLE;
 end
 endtask
 
+task HALT; 
+begin `SINGLE_MACHINE_CYCLE;
+    // Set IME=value
+    decoded_action.act <= CPU_HALT; 
+    decoded_action.dst <= 0;
+    decoded_action.arg <= 0;
+    decoded_action.src <= 0;
+    decoded_action.next_pc <= 0; 
+end
+endtask
+
 /* 
     Handle Interrupt ISR context switch
 */
@@ -1329,8 +1340,8 @@ begin
         end
         /* Second Cycle */ 16: 
         begin cycles_left <= 16 - 1; 
-            decoded_action.act <= CPU_NOP; 
-            decoded_action.next_pc <= 0; 
+            decoded_action.act <= cpu_halt ? CPU_EXIT_HALT : CPU_NOP; 
+            decoded_action.next_pc <= cpu_halt ? 1 : 0; 
         end
         /* Third Cycle */ 12:
         begin cycles_left <= 12 - 1;

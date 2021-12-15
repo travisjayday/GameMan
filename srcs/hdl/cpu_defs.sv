@@ -73,7 +73,7 @@ package cpu_defs;
 
     /* An general / catagorical action the CPU FSM can execute */
     typedef enum {
-        CPU_NOP, CPU_DIE,
+        CPU_NOP, CPU_DIE, CPU_HALT, CPU_EXIT_HALT,
         CPU_DISABLE_INTERRUPTS,
         CPU_ENABLE_INTERRUPTS,
 

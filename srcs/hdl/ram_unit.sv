@@ -68,14 +68,18 @@ module mmu_m(
     mem_if.master mmio_ints_if,
     mem_if.master mmio_dma_if,
     mem_if.master mmio_joypad_if,
-    mem_if.master bootrom_if
+    mem_if.master bootrom_if,
+    logic [7:0] rom_data_read_out
     );
 
     always_comb begin
         if      /* ROM (0x0000 - 0x7FFF) */
         (`ADDR_IN_RNG(16'h0000, 16'h8000)) 
         begin
-            `MAP_INTERFACE(rom_if, 16'h0000, 16'h0000); // map to rom_if[0:0x8000]
+            rom_if.addr_select  = cpu_req.addr_select;     
+            rom_if.write_value  = cpu_req.write_value;                                  
+            cpu_req.read_out    = rom_data_read_out;                                  
+            rom_if.write_enable = cpu_req.write_enable; 
         end else begin
             `UNMAP_INTERFACE(rom_if);
         end
@@ -179,8 +183,23 @@ module mmu_m(
                 begin `MAP_INTERFACE(mmio_ppu_if, 0, 0) 
                     `UM(mmio_ints_if); `UM(mmio_dma_if); `UM(mmio_joypad_if); `UM(mmio_timer_if); `UM(mmio_apu_if)
                 end
+            // 0xFF10-0xFF14 - APU Audio Channel 1
+            else if (cpu_req.addr_select >= 16'hFF10 && cpu_req.addr_select <= 16'hFF14)
+                begin `MAP_INTERFACE(mmio_apu_if, 0, 0)
+                    `UM(mmio_ints_if); `UM(mmio_dma_if); `UM(mmio_joypad_if); `UM(mmio_timer_if); `UM(mmio_ppu_if)
+                end
             // 0xFF16-0xFF19 - APU Audio Channel 2
             else if (cpu_req.addr_select >= 16'hFF16 && cpu_req.addr_select <= 16'hFF19)
+                begin `MAP_INTERFACE(mmio_apu_if, 0, 0)
+                    `UM(mmio_ints_if); `UM(mmio_dma_if); `UM(mmio_joypad_if); `UM(mmio_timer_if); `UM(mmio_ppu_if)
+                end
+            // 0xFF1A-0xFF1E - APU Audio Channel 3
+            else if (cpu_req.addr_select >= 16'hFF1A && cpu_req.addr_select <= 16'hFF1E)
+                begin `MAP_INTERFACE(mmio_apu_if, 0, 0)
+                    `UM(mmio_ints_if); `UM(mmio_dma_if); `UM(mmio_joypad_if); `UM(mmio_timer_if); `UM(mmio_ppu_if)
+                end
+            // 0xFF30-0xFF3F - APU Wave Data
+            else if (cpu_req.addr_select >= 16'hFF30 && cpu_req.addr_select <= 16'hFF3F)
                 begin `MAP_INTERFACE(mmio_apu_if, 0, 0)
                     `UM(mmio_ints_if); `UM(mmio_dma_if); `UM(mmio_joypad_if); `UM(mmio_timer_if); `UM(mmio_ppu_if)
                 end

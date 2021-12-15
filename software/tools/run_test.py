@@ -146,8 +146,8 @@ if __name__ == "__main__":
     testall = False
     uts = []
     for prog in os.listdir(prog_dir):
-        if not testall: 
-            if prog.startswith('ut_mmio_dma_4'):
+        if not testall:
+            if prog.startswith('ut_mmio_timer_1'):
                 uts.append(prog_dir + prog)
         else:
             if prog.startswith('ut_'):

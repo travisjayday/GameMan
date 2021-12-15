@@ -1,6 +1,6 @@
 INCLUDE "hardware.inc"
 MACRO die 
-	ld b, b
+	db $fd
 	nop
 ENDM
 SECTION "Header", ROM0[$00] 

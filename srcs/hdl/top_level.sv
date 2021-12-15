@@ -16,10 +16,11 @@ module top_level import cpu_defs::*;(
     output logic[3:0] vga_b,
     output logic[3:0] vga_g,
     output logic vga_hs,
-    output logic vga_vs
+    output logic vga_vs,
+    input wire btnc
     );
     logic rst;
-    assign rst = sw[15];
+    assign rst = btnc;
 
     reg_file_s regs_out;
   
@@ -35,7 +36,8 @@ module top_level import cpu_defs::*;(
     mem_if nop(); 
 
     mem_if rom_if(); 
-    bram_32k_rom_m rom(clk_4mhz, rom_if);
+    logic[7:0] rom_data_read_out;
+    bram_32k_rom_m rom(clk_4mhz, sw[1:0], rom_data_read_out, rom_if);
     /*cart_if cart(
                 .clk(clk_4mhz),
                 .rst(rst),
@@ -166,7 +168,8 @@ module top_level import cpu_defs::*;(
         .mmio_apu_if(mmio_apu_if),
         .mmio_ppu_if(mmio_ppu_if),
         .mmio_joypad_if(mmio_joypad_if),
-        .bootrom_if(bootrom_if)
+        .bootrom_if(bootrom_if),
+        .rom_data_read_out(rom_data_read_out)
     );
 
     // CPU 

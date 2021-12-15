@@ -68,8 +68,8 @@ if __name__ == "__main__":
         #out = make_coe('F:\\Projects\\GameMan\\software\\progs\\ut_bootrom\\out.gb')
         #out = make_coe('F:\\Projects\\GameMan\\software\\progs\\prog_cpu_test\\09-op r,r.gb')
         #out = make_coe('F:\\Projects\\GameMan\\software\\progs\\ut_cpu_op_rp\\out.gb')
-        out = make_coe('F:\\Projects\\GameMan\\software\\progs\\prog_tetris\\tetris.gb')
-        with open('F:\\Projects\\GameMan\\tetris_fast.coe', 'w') as f:
+        out = make_coe('F:\\Projects\\GameMan\\software\\progs\\prog_motorcross\\motorcross_maniacs.gb')
+        with open('F:\\Projects\\GameMan\\motorcross.coe', 'w') as f:
             f.write(out)
         print('wrote coe')
         quit()

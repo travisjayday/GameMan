@@ -8,6 +8,7 @@ module decoder_m import cpu_defs::*; (
     input wire rst,
     input wire[7:0] inst,
     input flags_s flags,
+    input wire cpu_halt,
     input wire[7:0] active_IF,
     output decoded_action_s decoded_action
 );
@@ -288,7 +289,7 @@ module decoder_m import cpu_defs::*; (
         4'h3: LD_MEM8_REG8(REG_HL, REG_E, ALU_OP_NOP);              // LD (HL), E
         4'h4: LD_MEM8_REG8(REG_HL, REG_H, ALU_OP_NOP);              // LD (HL), H
         4'h5: LD_MEM8_REG8(REG_HL, REG_L, ALU_OP_NOP);              // LD (HL), L
-        // TODO: HALT
+        4'h6: HALT();                                               // HALT
         4'h7: LD_MEM8_REG8(REG_HL, REG_A, ALU_OP_NOP);              // LD (HL), A
         4'h8: LD_REG8_REG8(REG_A, REG_B);                           // LD A, B
         4'h9: LD_REG8_REG8(REG_A, REG_C);                           // LD A, C

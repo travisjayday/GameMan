@@ -20,16 +20,34 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 module bram_32k_rom_m (
-    input wire clk, 
+    input wire clk,
+    input wire [1:0] sw,
+    output logic[7:0] rom_data_read_out,
     mem_if.slave in);
 
-    bram_32k_rom unit(
+    logic [7:0] game0_out;
+    bram_32k_rom game0(
         .addra(in.addr_select),
         .clka(clk), 
-        //.dina(in.write_value),
-        //.wea(in.write_enable),
-        .douta(in.read_out)
+        .douta(game0_out)
         );
+    //assign game0_out = 0;
+
+    logic [7:0] game1_out;
+    bram_32k_rom_2 game1(
+        .addra(in.addr_select),
+        .clka(clk), 
+        .douta(game1_out)
+        );
+   
+    always_comb begin
+        case (sw)
+            2'b00: rom_data_read_out = game0_out;
+            2'b01: rom_data_read_out = game1_out;
+            default: rom_data_read_out = game0_out;
+        endcase
+    end
+    
 endmodule
 
 module bram_bootrom_m (
