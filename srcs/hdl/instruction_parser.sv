@@ -836,10 +836,10 @@ begin
         /* Second Cycle */ 8:
         begin cycles_left <= 8 - 1; 
             // Z <= offset
-            decoded_action.act <= WRITE_REG8_IMM;
-            decoded_action.dst <= REG_Z;
-            decoded_action.arg <= inst; 
-            decoded_action.src <= 0; 
+            decoded_action.act <= WRITE_REG16_IMM;
+            decoded_action.dst <= REG_WZ;
+            decoded_action.arg <= 0; 
+            decoded_action.src <= inst; 
             decoded_action.next_pc <= 0; 
         end
         /* Third Cycle */ 4:
@@ -1280,7 +1280,7 @@ begin
             decoded_action.arg <= 1;            // increment SP after
             decoded_action.dst <= 0;   
             decoded_action.next_pc <= 0; 
-            prev_inst <= inst;           // LSB = prev_instruction
+            tmp_const <= inst;           // LSB = tmp  
         end
         /* Third Cycle */ 4:
         begin cycles_left <= 4 - 1;
@@ -1288,7 +1288,7 @@ begin
             decoded_action.act <= WRITE_REG16_IMM;
             decoded_action.dst <= dst;
             decoded_action.arg <= inst;         // MSB = inst
-            decoded_action.src <= prev_inst;
+            decoded_action.src <= tmp_const;
             decoded_action.next_pc <= 1; 
         end
         default: begin
@@ -1310,6 +1310,17 @@ begin `SINGLE_MACHINE_CYCLE;
 end
 endtask
 
+task HALT; 
+begin `SINGLE_MACHINE_CYCLE;
+    // Set IME=value
+    decoded_action.act <= CPU_HALT; 
+    decoded_action.dst <= 0;
+    decoded_action.arg <= 0;
+    decoded_action.src <= 0;
+    decoded_action.next_pc <= 0; 
+end
+endtask
+
 /* 
     Handle Interrupt ISR context switch
 */
@@ -1320,17 +1331,17 @@ begin
     case (cycles_left) 
         /* First Cycle */ 0: 
         begin cycles_left <= 20 - 1;
-            current_isr <= IF; 
+            current_isr <= active_IF & ~if_mask; 
             current_inst <= 0; 
             // Set IME=0 and IF disable active bit
             decoded_action.act <= CPU_DISABLE_INTERRUPTS; 
-            decoded_action.src <= current_isr & if_mask;
+            decoded_action.src <= if_mask;
             decoded_action.next_pc <= 0; 
         end
         /* Second Cycle */ 16: 
         begin cycles_left <= 16 - 1; 
-            decoded_action.act <= CPU_NOP; 
-            decoded_action.next_pc <= 0; 
+            decoded_action.act <= cpu_halt ? CPU_EXIT_HALT : CPU_NOP; 
+            decoded_action.next_pc <= cpu_halt ? 1 : 0; 
         end
         /* Third Cycle */ 12:
         begin cycles_left <= 12 - 1;

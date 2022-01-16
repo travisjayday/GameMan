@@ -101,7 +101,7 @@ logic[4:0] schedule_IME = 0;
 */
 always_ff @(negedge clk) begin
     if (rst) begin
-        regs.PC <= 16'hE000; 
+        regs.PC <= 16'hE000;  // E000
         regs.AF[15:8] <= 0; 
         regs.AF[3:0] <= 0; 
         regs.BC <= 0; 

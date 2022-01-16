@@ -50,10 +50,15 @@ module cpu_m import cpu_defs::*;(
     logic interrupt_happening; 
     assign interrupt_happening = regs.IME && (regs.IF & regs.IE);
 
+
     // Instruction is always the output of MMU
     assign inst = mmu.read_out;
     decoded_action_s decoded_action;
-    decoder_m decoder(clk, rst, inst, flags, interrupt_happening? regs.IF : 8'b00, decoded_action);
+    logic cpu_halt;
+    decoder_m decoder(clk, rst, inst, flags, cpu_halt, interrupt_happening? (regs.IF & regs.IE) : 8'b00, decoded_action);
+
+    logic exit_halt;
+    assign exit_halt = (!regs.IME && (regs.IF & regs.IE)) && cpu_halt;
 
     // Main state for CPU FSM
     cpu_state_t cpu_state;
@@ -72,6 +77,7 @@ module cpu_m import cpu_defs::*;(
             reg_wr_value <= 0; 
             mmu.write_enable <= 0; 
             mmu.addr_select <= regs.PC; 
+            cpu_halt <= 0;
         end else begin
             // See http://www.z80.info/z80arki.htm for overlapping execution model
             // Each state is commented with it's T-state from the diagram
@@ -153,7 +159,7 @@ module cpu_m import cpu_defs::*;(
 
                         // set IF=new IF
                         mmu.addr_select <= 16'hFF0F;
-                        mmu.write_value <= decoded_action.src;
+                        mmu.write_value <= mmio_reg_IF & decoded_action.src;
                         mmu.write_enable <= 1'b1;
                     end
                     WRITE_MEM8_REG8: begin
@@ -292,6 +298,22 @@ module cpu_m import cpu_defs::*;(
                     end
                     CPU_DIE: begin
                         cpu_died <= 1; 
+                    end
+                    CPU_HALT: begin
+                        if (!exit_halt) begin
+                            cpu_halt <= 1;
+                            mmu.addr_select <= read_reg16(REG_PC); 
+                            mmu.write_enable <= 0; 
+                        end else begin
+                            cpu_halt <= 0;
+                            mmu.addr_select <= read_reg16(REG_PC) + 1; 
+                            mmu.write_enable <= 0; 
+                        end
+                    end
+                    CPU_EXIT_HALT: begin
+                        cpu_halt <= 0;
+                        mmu.addr_select <= read_reg16(REG_PC) + 1; 
+                        mmu.write_enable <= 0; 
                     end
                     FLOW_JR: begin
                         mmu.addr_select <= 

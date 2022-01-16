@@ -24,7 +24,7 @@ module cart_if(
         addr_out = rom_if.addr_select;
         n_read_enable_out = rom_if.write_enable;      // no need to invert due to cartride being active low
         n_write_enable_out = ~rom_if.write_enable;    // invert because cartridge is active low.
-        n_cs_out = ~(16'hA000 <= rom_if.addr_select && rom_if.addr_select < 16'hC000); // cs is active when the cpu is accessing the external ram (i think)        
+        n_cs_out = ~rom_if.write_enable; // cs is active when the cpu is accessing the external ram (i think)        
         rom_if.read_out = data_out;
     end
     

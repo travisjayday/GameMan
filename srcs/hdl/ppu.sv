@@ -182,7 +182,7 @@ module ppu(
         if(!mmio_wr) begin 
              case(mmio_a) 
                 16'hFF40: mmio_dout = LCDC;
-                16'hFF41: mmio_dout = STAT;
+                16'hFF41: mmio_dout = LCDC[7] ? STAT : { STAT[7:2] , 2'b0};
                 16'hFF42: mmio_dout = SCY;
                 16'hFF43: mmio_dout = SCX;
                 16'hFF44: mmio_dout = LY;
