@@ -1,4 +1,4 @@
-# GameMan
+# FPGA Z80 CPU for Gameboy - GameMan
 A hardware re-implementation of the original GameBoy on a Xilinx FPGA. 
 
 ## Features
